@@ -66,7 +66,7 @@
 
             <div class="recycling-table-container">
                 {% if reciclajes %}
-                    <table class="recycling-table">
+                    <table class="recycling-table sh-table">
                         <thead>
                             <tr>
                                 <th>USUARIO</th>
@@ -101,18 +101,37 @@
                                     <td>
                                         <div class="detection-tags">
                                             {% if reciclaje.botella_detectada %}
-                                                <span class="match-badge">Botella</span>
+                                                <span class="sh-chip sh-chip--bottle">Botella</span>
                                             {% endif %}
                                             {% if reciclaje.tapa_detectada %}
-                                                <span class="match-badge">Tapa</span>
+                                                <span class="sh-chip sh-chip--cap">Tapa</span>
                                             {% endif %}
                                             {% if reciclaje.etiqueta_detectada %}
-                                                <span class="match-badge">Etiqueta</span>
+                                                <span class="sh-chip sh-chip--label">Etiqueta</span>
+                                            {% endif %}
+                                            {% if not reciclaje.botella_detectada and not reciclaje.tapa_detectada and not reciclaje.etiqueta_detectada %}
+                                                <span class="sh-chip sh-chip--muted">Sin detecciones</span>
                                             {% endif %}
                                         </div>
                                     </td>
                                     <td>
-                                        <span class="ia-badge">{{ "%.1f"|format(reciclaje.confianza) }}%</span>
+                                        {% set confidence = [[reciclaje.confianza|float, 0]|max, 100]|min %}
+                                        <div class="confidence-cell">
+                                            <div class="confidence-value">
+                                                <span>Confianza IA</span>
+                                                <strong>{{ "%.1f"|format(confidence) }}%</strong>
+                                            </div>
+                                            <div
+                                                class="confidence-track {{ 'is-high' if confidence >= 80 else 'is-medium' if confidence >= 50 else 'is-low' }}"
+                                                role="meter"
+                                                aria-label="Confianza IA"
+                                                aria-valuemin="0"
+                                                aria-valuemax="100"
+                                                aria-valuenow="{{ confidence|round(1) }}"
+                                            >
+                                                <span style="width: {{ confidence }}%"></span>
+                                            </div>
+                                        </div>
                                     </td>
                                     <td>
                                         <div class="recycling-points">
