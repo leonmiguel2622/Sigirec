@@ -47,6 +47,24 @@ else:
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
+# #region agent log
+def _agent_log(hypothesis_id, location, message, data=None, run_id="pre-fix"):
+    import json as _json
+    try:
+        with open(os.path.join(BASE_DIR, "debug-8a12b9.log"), "a", encoding="utf-8") as _f:
+            _f.write(_json.dumps({
+                "sessionId": "8a12b9",
+                "runId": run_id,
+                "hypothesisId": hypothesis_id,
+                "location": location,
+                "message": message,
+                "data": data or {},
+                "timestamp": int(time.time() * 1000),
+            }) + "\n")
+    except Exception:
+        pass
+# #endregion
+
 try:
     from dotenv import load_dotenv
 except ImportError:
@@ -157,6 +175,9 @@ if YOLO is None:
     print("======================================")
     print("ERROR CARGANDO MODELO:", model_error)
     print("======================================")
+    # #region agent log
+    _agent_log("B", "app.py:yolo-none", "YOLO import failed", {"error": model_error})
+    # #endregion
 else:
     try:
         model_path = os.path.join(
@@ -178,14 +199,23 @@ else:
         print("RUTA:", model.ckpt_path)
         print("CLASES:", model.names)
         print("======================================")
+        # #region agent log
+        _agent_log("B", "app.py:model-ok", "YOLO model loaded", {"path": str(model.ckpt_path)})
+        # #endregion
 
     except Exception as e:
         model_error = str(e)
         print("======================================")
         print("ERROR CARGANDO MODELO:", e)
         print("======================================")
+        # #region agent log
+        _agent_log("B", "app.py:model-fail", "YOLO model load failed", {"error": model_error})
+        # #endregion
 
 app = Flask(__name__)
+# #region agent log
+_agent_log("C", "app.py:flask-init", "Flask app created")
+# #endregion
 app.secret_key = cargar_secret_key()
 app.config.update(
     SESSION_COOKIE_HTTPONLY=True,
@@ -343,6 +373,9 @@ def manejar_archivo_grande(error):
 # ==========================================
 @app.route("/")
 def index():
+    # #region agent log
+    _agent_log("E", "app.py:index", "GET /", {"remote": request.remote_addr})
+    # #endregion
     return redirect(url_for("login"))
 
 # ==========================================
@@ -3221,6 +3254,21 @@ def admin_canjar_puntos():
 # EJECUTAR
 # ==========================================
 if __name__ == "__main__":
+    # #region agent log
+    db_ok = obtener_conexion() is not None
+    _agent_log(
+        "A",
+        "app.py:main",
+        "Starting Flask",
+        {
+            "db_ok": db_ok,
+            "model_ok": model is not None,
+            "model_error": model_error,
+            "debug": os.getenv("FLASK_DEBUG") == "1",
+            "cwd": os.getcwd(),
+        },
+    )
+    # #endregion
     app.run(
         debug=os.getenv("FLASK_DEBUG") == "1"
     )
