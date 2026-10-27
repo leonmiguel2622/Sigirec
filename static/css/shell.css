@@ -8,8 +8,21 @@
    FOCO VISIBLE GLOBAL
    --------------------------------------------------------- */
 :focus-visible {
-    outline: 2px solid var(--sh-accent-glow);
-    outline-offset: 2px;
+    outline: 3px solid var(--sh-focus-ring);
+    outline-offset: 3px;
+}
+
+::selection {
+    color: var(--sh-selection-text);
+    background: var(--sh-selection-bg);
+}
+
+.sh-border-subtle {
+    border: 1px solid var(--sh-line-card);
+}
+
+.sh-rounded-standard {
+    border-radius: var(--sh-radius-standard);
 }
 
 /* =========================================================

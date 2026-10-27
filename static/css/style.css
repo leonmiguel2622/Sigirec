@@ -124,8 +124,6 @@ select {
 
     color: var(--white);
 
-    outline: none;
-
     transition: 0.2s ease;
 }
 

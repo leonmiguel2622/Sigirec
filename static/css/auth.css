@@ -79,12 +79,12 @@
 }
 
 .auth-page ::selection {
-    color: var(--auth-accent-ink);
-    background: var(--auth-accent);
+    color: var(--sh-selection-text);
+    background: var(--sh-selection-bg);
 }
 
 .auth-page :focus-visible {
-    outline: 2px solid var(--auth-accent);
+    outline: 3px solid var(--sh-focus-ring);
     outline-offset: 3px;
 }
 
@@ -649,7 +649,6 @@
     padding: 0 15px;
     border: 1px solid var(--auth-field-line);
     border-radius: 13px;
-    outline: none;
     color: var(--auth-ink);
     background: rgba(3, 9, 5, 0.54);
     box-shadow:
