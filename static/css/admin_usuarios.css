@@ -34,9 +34,9 @@
 .card-label,
 .section-title {
   color: #9aa7a0;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 1.5px;
+  font-size: var(--sh-type-label);
+  font-weight: var(--sh-weight-semibold);
+  letter-spacing: var(--sh-tracking-label);
 }
 
 /* Flash Messages */
@@ -69,7 +69,8 @@
 .management-user-title h3 {
   margin: 8px 0 6px;
   color: #e9eee9;
-  font-size: 21px;
+  font-size: var(--sh-type-h3);
+  font-weight: var(--sh-weight-semibold);
 }
 
 .users-header p,

@@ -3,9 +3,9 @@
 .admin-page-label,
 .admin-card-label {
     color: #9aa7a0;
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 1.5px;
+    font-size: var(--sh-type-label);
+    font-weight: var(--sh-weight-semibold);
+    letter-spacing: var(--sh-tracking-label);
 }
 
 .admin-stat-grid {
@@ -36,9 +36,9 @@
 
 .admin-stat-top > span {
     color: #9aa7a0;
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 1px;
+    font-size: var(--sh-type-label);
+    font-weight: var(--sh-weight-semibold);
+    letter-spacing: var(--sh-tracking-label);
 }
 
 .admin-stat-icon {
@@ -57,7 +57,8 @@
     display: block;
     margin-top: 17px;
     color: #edf2ee;
-    font-size: 28px;
+    font-size: var(--sh-type-kpi);
+    font-weight: var(--sh-weight-bold);
 }
 
 .admin-stat-card p {

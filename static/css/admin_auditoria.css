@@ -110,9 +110,9 @@
 
 .audit-stat-top > span {
     color: #9aa7a0;
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 1px;
+    font-size: var(--sh-type-label);
+    font-weight: var(--sh-weight-semibold);
+    letter-spacing: var(--sh-tracking-label);
 }
 
 .audit-stat-icon {
@@ -131,7 +131,8 @@
     display: block;
     margin-top: 13px;
     color: #edf2ee;
-    font-size: 24px;
+    font-size: var(--sh-type-kpi);
+    font-weight: var(--sh-weight-bold);
 }
 
 .audit-stat-card p {

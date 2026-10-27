@@ -34,16 +34,45 @@
 
 body {
 
-    font-family:
-        "Segoe UI",
-        Arial,
-        sans-serif;
+    font-family: var(--sh-font);
+    font-size: var(--sh-type-body);
+    font-weight: var(--sh-weight-regular);
+    line-height: var(--sh-leading-body);
+    letter-spacing: var(--sh-tracking-normal);
 
     background: var(--bg-main);
 
     color: var(--white);
 
     min-height: 100vh;
+}
+
+h1,
+h2,
+h3 {
+    line-height: var(--sh-leading-heading);
+    letter-spacing: var(--sh-tracking-normal);
+}
+
+h1 {
+    font-size: var(--sh-type-h1);
+    font-weight: var(--sh-weight-bold);
+}
+
+h2 {
+    font-size: var(--sh-type-h2);
+    font-weight: var(--sh-weight-semibold);
+}
+
+h3 {
+    font-size: var(--sh-type-h3);
+    font-weight: var(--sh-weight-semibold);
+}
+
+label {
+    font-size: var(--sh-type-label);
+    font-weight: var(--sh-weight-medium);
+    letter-spacing: var(--sh-tracking-label);
 }
 
 

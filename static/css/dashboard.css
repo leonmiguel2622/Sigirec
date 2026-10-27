@@ -131,11 +131,11 @@
 
     color: #7cff6b;
 
-    font-size: 11px;
+    font-size: var(--sh-type-label);
 
-    font-weight: 700;
+    font-weight: var(--sh-weight-semibold);
 
-    letter-spacing: 1.6px;
+    letter-spacing: var(--sh-tracking-label);
 
 }
 
@@ -144,9 +144,9 @@
 
     margin-top: 8px;
 
-    font-size: 30px;
+    font-size: var(--sh-type-h1);
 
-    font-weight: 600;
+    font-weight: var(--sh-weight-semibold);
 
 }
 
@@ -164,7 +164,7 @@
 
     color: #9aa7a0;
 
-    font-size: 13px;
+    font-size: var(--sh-type-body);
 
 }
 
@@ -245,15 +245,15 @@
 
     margin-top: 12px;
 
-    font-size: 55px;
+    font-size: var(--sh-type-kpi-large);
 
     line-height: 1;
 
-    font-weight: 700;
+    font-weight: var(--sh-weight-bold);
 
     color: #f1f5f2;
 
-    letter-spacing: -2px;
+    letter-spacing: var(--sh-tracking-normal);
 
 }
 
@@ -366,7 +366,9 @@
 
     margin-top: 17px;
 
-    font-size: 28px;
+    font-size: var(--sh-type-kpi);
+
+    font-weight: var(--sh-weight-bold);
 
 }
 

@@ -209,16 +209,17 @@
 .admin-page-label,
 .admin-card-label {
     color: var(--sh-text-muted);
-    font-size: var(--sh-text-11);
-    font-weight: 700;
-    letter-spacing: 1.5px;
+    font-size: var(--sh-type-label);
+    font-weight: var(--sh-weight-semibold);
+    letter-spacing: var(--sh-tracking-label);
 }
 
 .admin-page-header h2,
 .admin-header h2 {
     margin: 9px 0 7px;
     color: var(--sh-text-primary);
-    font-size: var(--sh-text-31);
+    font-size: var(--sh-type-h1);
+    font-weight: var(--sh-weight-semibold);
 }
 
 .admin-page-header h2 span,
@@ -230,7 +231,7 @@
 .admin-header p {
     margin: 0;
     color: var(--sh-text-muted);
-    font-size: var(--sh-text-13);
+    font-size: var(--sh-type-body);
     line-height: 1.6;
 }
 

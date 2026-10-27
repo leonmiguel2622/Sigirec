@@ -70,11 +70,11 @@
 
     color: #9aa7a0;
 
-    font-size: 11px;
+    font-size: var(--sh-type-label);
 
-    font-weight: 700;
+    font-weight: var(--sh-weight-semibold);
 
-    letter-spacing: 1px;
+    letter-spacing: var(--sh-tracking-label);
 }
 
 
@@ -84,9 +84,9 @@
 
     color: #e4ebe5;
 
-    font-size: 28px;
+    font-size: var(--sh-type-kpi);
 
-    font-weight: 700;
+    font-weight: var(--sh-weight-bold);
 
     line-height: 1.1;
 }

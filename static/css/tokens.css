@@ -63,15 +63,33 @@
     --sh-space-12: 48px;
 
     /* --- Tipografía --- */
-    --sh-font: "Segoe UI", Arial, sans-serif;
-    --sh-text-11: 11px;
-    --sh-text-12: 12px;
+    --sh-font: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --sh-type-display: 48px;
+    --sh-type-h1: 32px;
+    --sh-type-h2: 24px;
+    --sh-type-h3: 20px;
+    --sh-type-kpi: 32px;
+    --sh-type-kpi-large: 48px;
+    --sh-type-body-lg: 16px;
+    --sh-type-body: 14px;
+    --sh-type-label: 12px;
+    --sh-type-caption: 11px;
+    --sh-weight-regular: 400;
+    --sh-weight-medium: 500;
+    --sh-weight-semibold: 600;
+    --sh-weight-bold: 700;
+    --sh-leading-heading: 1.2;
+    --sh-leading-body: 1.5;
+    --sh-tracking-normal: 0;
+    --sh-tracking-label: 0;
+    --sh-text-11: var(--sh-type-caption);
+    --sh-text-12: var(--sh-type-label);
     --sh-text-13: 13px;
-    --sh-text-14: 14px;
-    --sh-text-16: 16px;
-    --sh-text-20: 20px;
-    --sh-text-24: 24px;
-    --sh-text-31: 31px;
+    --sh-text-14: var(--sh-type-body);
+    --sh-text-16: var(--sh-type-body-lg);
+    --sh-text-20: var(--sh-type-h3);
+    --sh-text-24: var(--sh-type-h2);
+    --sh-text-31: var(--sh-type-h1);
 
     /* --- Movimiento --- */
     --sh-speed: 0.25s;
