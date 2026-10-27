@@ -3,43 +3,43 @@
 
 :root {
 
-    /* --- Superficies (4 niveles + estados) --- */
-    --sh-bg-950: #040906;
-    --sh-bg-900: #070b09;
-    --sh-bg-base: #080c09;
-    --sh-bg-850: #0a0f0c;
-    --sh-bg-element: #0c120e;
-    --sh-bg-card: #111a16;
-    --sh-bg-card-alt: #101b12;
-    --sh-bg-hover: #142016;
-    --sh-bg-raised: #18231b;
-    --sh-bg-active: #1a2b1c;
-    --sh-bg-hover-strong: #1d2b21;
+    /* --- Paleta global --- */
+    --sh-bg-950: #0f1410;
+    --sh-bg-900: #111712;
+    --sh-bg-base: #0f1410;
+    --sh-bg-850: #131a15;
+    --sh-bg-element: #161d18;
+    --sh-bg-card: #161d18;
+    --sh-bg-card-alt: #1a221c;
+    --sh-bg-hover: #1c291f;
+    --sh-bg-raised: #202b23;
+    --sh-bg-active: #24352a;
+    --sh-bg-hover-strong: #273a2c;
 
     /* --- Acentos --- */
-    --sh-accent: #91ff66;
-    --sh-accent-soft: #7cff6b;
-    --sh-accent-hover: #96ff87;
-    --sh-accent-dark: #35c94e;
-    --sh-accent-glow: rgba(124, 255, 107, 0.35);
+    --sh-accent: #22c55e;
+    --sh-accent-soft: #4ade80;
+    --sh-accent-hover: #16a34a;
+    --sh-accent-dark: #15803d;
+    --sh-accent-glow: rgba(34, 197, 94, 0.3);
 
     /* --- Texto --- */
-    --sh-text-primary: #edf2ee;
-    --sh-text-bright: #f1f5f2;
-    --sh-text-secondary: #dce5de;
-    --sh-text-muted: #9aa7a0;
-    --sh-text-dim: #77837b;
+    --sh-text-primary: #e5e7eb;
+    --sh-text-bright: #f9fafb;
+    --sh-text-secondary: #d1d5db;
+    --sh-text-muted: #9ca3af;
+    --sh-text-dim: #6b7280;
 
     /* --- Semánticos --- */
-    --sh-danger: #ff7c7c;
-    --sh-danger-strong: #ff6b6b;
-    --sh-warning: #d8b85a;
-    --sh-success: #2ecc71;
+    --sh-danger: #f87171;
+    --sh-danger-strong: #ef4444;
+    --sh-warning: #fbbf24;
+    --sh-success: #22c55e;
 
     /* --- Líneas --- */
-    --sh-line-strong: rgba(124, 255, 107, 0.30);
-    --sh-line: rgba(124, 255, 107, 0.18);
-    --sh-line-soft: rgba(124, 255, 107, 0.12);
+    --sh-line-strong: rgba(34, 197, 94, 0.3);
+    --sh-line: rgba(34, 197, 94, 0.18);
+    --sh-line-soft: rgba(34, 197, 94, 0.12);
     --sh-line-neutral: rgba(255, 255, 255, 0.06);
 
     /* --- Radios --- */

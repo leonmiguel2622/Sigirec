@@ -1,19 +1,19 @@
 .auth-page {
 
-    --auth-bg: #040906;
-    --auth-stage: rgba(10, 20, 14, 0.72);
-    --auth-panel: rgba(7, 14, 10, 0.88);
-    --auth-ink: #f2f8f3;
-    --auth-muted: #a7b9ae;
-    --auth-dim: #86998e;
-    --auth-accent: #8dfb78;
-    --auth-accent-bright: #a7ff94;
-    --auth-accent-ink: #061108;
-    --auth-line: rgba(193, 255, 202, 0.14);
-    --auth-line-strong: rgba(193, 255, 202, 0.26);
-    --auth-field-line: rgba(191, 238, 199, 0.42);
-    --auth-danger: #ffb4ab;
-    --auth-success: #baff9f;
+    --auth-bg: var(--sh-bg-base);
+    --auth-stage: rgba(15, 20, 16, 0.72);
+    --auth-panel: rgba(22, 29, 24, 0.9);
+    --auth-ink: var(--sh-text-bright);
+    --auth-muted: var(--sh-text-muted);
+    --auth-dim: var(--sh-text-dim);
+    --auth-accent: var(--sh-accent);
+    --auth-accent-bright: var(--sh-accent-soft);
+    --auth-accent-ink: #07130b;
+    --auth-line: var(--sh-line-soft);
+    --auth-line-strong: var(--sh-line);
+    --auth-field-line: var(--sh-line-strong);
+    --auth-danger: var(--sh-danger);
+    --auth-success: var(--sh-success);
     --auth-ease-out: cubic-bezier(0.23, 1, 0.32, 1);
     --auth-ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
     --auth-page-pad: clamp(14px, 2.6vw, 36px);

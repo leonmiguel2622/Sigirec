@@ -4,19 +4,19 @@
 
 :root {
 
-    --bg-main: #070b09;
-    --bg-secondary: #0d1411;
-    --bg-card: #111a16;
+    --bg-main: var(--sh-bg-base);
+    --bg-secondary: var(--sh-bg-element);
+    --bg-card: var(--sh-bg-card);
 
-    --green: #7cff6b;
-    --green-dark: #35c94e;
-    --green-soft: rgba(124, 255, 107, 0.12);
+    --green: var(--sh-accent);
+    --green-dark: var(--sh-accent-dark);
+    --green-soft: var(--sh-line-soft);
 
-    --white: #f1f5f2;
-    --gray: #9aa7a0;
-    --gray-dark: #9aa7a0;
+    --white: var(--sh-text-bright);
+    --gray: var(--sh-text-muted);
+    --gray-dark: var(--sh-text-dim);
 
-    --border: rgba(124, 255, 107, 0.18);
+    --border: var(--sh-line);
 
 }
 
