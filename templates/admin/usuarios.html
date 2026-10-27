@@ -8,72 +8,8 @@
 
 {% block content %}
 
-<div class="admin-layout">
-    <div class="mobile-overlay" id="mobile-overlay"></div>
-    <button class="mobile-hamburger" id="mobile-hamburger" aria-label="Abrir menú">&#9776;</button>
-
-    <aside class="admin-sidebar" id="mobile-sidebar">
-
-        <div class="admin-brand">
-            <div class="admin-logo">
-                <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo SIGIREC">
-            </div>
-            <h1>SIGIREC</h1>
-            <p>Panel administrativo</p>
-        </div>
-
-        <nav class="admin-nav">
-            <span class="admin-menu-title">MENÚ ADMINISTRATIVO</span>
-
-            <a href="{{ url_for('admin_dashboard') }}" class="admin-nav-item">
-                <span class="admin-nav-icon">⌂</span>
-                <span>Dashboard</span>
-            </a>
-
-            <a href="{{ url_for('admin_usuarios') }}" class="admin-nav-item active">
-                <span class="admin-nav-icon">♙</span>
-                <span>Gestión de usuarios</span>
-            </a>
-
-            <a href="{{ url_for('admin_reciclajes') }}" class="admin-nav-item">
-                <span class="admin-nav-icon">♻</span>
-                <span>Reciclajes</span>
-            </a>
-
-            <a href="{{ url_for('admin_movimientos') }}" class="admin-nav-item">
-                <span class="admin-nav-icon">⇄</span>
-                <span>Movimientos</span>
-            </a>
-
-            <a href="{{ url_for('admin_catalogo') }}" class="admin-nav-item">
-                <span class="admin-nav-icon">▣</span>
-                <span>Catálogo</span>
-            </a>
-
-            <a href="{{ url_for('admin_auditorias') }}" class="admin-nav-item">
-                <span class="admin-nav-icon">◷</span>
-                <span>Auditorías</span>
-            </a>
-        </nav>
-
-        <div class="admin-sidebar-bottom">
-            <div class="admin-user-box">
-                <div class="admin-avatar">
-                    {{ session["nombre_completo"][0] }}
-                </div>
-                <div class="admin-user-info">
-                    <strong>{{ session["nombre_completo"] }}</strong>
-                    <span>ADMINISTRADOR</span>
-                </div>
-            </div>
-
-            <a href="{{ url_for('logout') }}" class="admin-logout">
-                <span>↪</span>
-                <span>Cerrar sesión</span>
-            </a>
-        </div>
-
-    </aside>
+{% set active_item = "usuarios" %}
+{% include "partials/admin_shell.html" %}
 
     <main class="admin-main">
 
@@ -180,20 +116,18 @@
                                     </td>
                                     <td>
                                         <button type="button" class="manage-button"
-                                            onclick="abrirModalUsuario({
-                                                id: {{ usuario.id_usuario }},
-                                                nombre: '{{ usuario.nombre_completo | e }}',
-                                                identificacion: '{{ usuario.numero_identificacion | e }}',
-                                                correo: '{{ usuario.correo | e }}',
-                                                telefono: '{{ usuario.telefono | e }}',
-                                                rol: '{{ usuario.rol | e }}',
-                                                tipo: '{{ usuario.tipo_usuario | e }}',
-                                                programa: '{{ usuario.programa_formacion | e }}',
-                                                ficha: '{{ usuario.numero_ficha | e }}',
-                                                puntos: {{ usuario.puntos_totales }},
-                                                escaneos: {{ usuario.escaneos_ia }},
-                                                esAdmin: {{ 'true' if usuario.id_usuario == session['id_usuario'] else 'false' }}
-                                            })">Gestionar</button>
+                                            data-id="{{ usuario.id_usuario }}"
+                                            data-nombre="{{ usuario.nombre_completo }}"
+                                            data-identificacion="{{ usuario.numero_identificacion }}"
+                                            data-correo="{{ usuario.correo }}"
+                                            data-telefono="{{ usuario.telefono }}"
+                                            data-rol="{{ usuario.rol }}"
+                                            data-tipo="{{ usuario.tipo_usuario }}"
+                                            data-programa="{{ usuario.programa_formacion }}"
+                                            data-ficha="{{ usuario.numero_ficha }}"
+                                            data-puntos="{{ usuario.puntos_totales }}"
+                                            data-escaneos="{{ usuario.escaneos_ia }}"
+                                            data-es-admin="{{ 'true' if usuario.id_usuario == session['id_usuario'] else 'false' }}">Gestionar</button>
                                     </td>
                                 </tr>
                             {% endfor %}
@@ -216,7 +150,7 @@
 
 <!-- MODAL GESTIÓN DE USUARIO -->
 <div class="modal-overlay" id="modal-usuario-overlay">
-    <div class="modal-usuario">
+    <div class="modal-usuario" role="dialog" aria-modal="true" aria-labelledby="modal-usuario-nombre">
 
         <div class="modal-usuario-header">
             <div>
@@ -239,25 +173,26 @@
         <!-- TAB EDITAR -->
         <div class="modal-tab-content active" id="tab-editar">
             <form id="form-editar-usuario" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <div class="form-grid">
                     <div class="form-group">
-                        <label>Nombre completo</label>
+                        <label for="m-nombre">Nombre completo</label>
                         <input type="text" name="nombre_completo" id="m-nombre" required>
                     </div>
                     <div class="form-group">
-                        <label>Identificación</label>
+                        <label for="m-identificacion">Identificación</label>
                         <input type="text" name="numero_identificacion" id="m-identificacion" required>
                     </div>
                     <div class="form-group">
-                        <label>Correo</label>
+                        <label for="m-correo">Correo</label>
                         <input type="email" name="correo" id="m-correo" required>
                     </div>
                     <div class="form-group">
-                        <label>Teléfono</label>
+                        <label for="m-telefono">Teléfono</label>
                         <input type="text" name="telefono" id="m-telefono">
                     </div>
                     <div class="form-group">
-                        <label>Rol</label>
+                        <label for="m-rol">Rol</label>
                         <select name="rol" id="m-rol" required>
                             <option value="APRENDIZ">Aprendiz</option>
                             <option value="INSTRUCTOR">Instructor</option>
@@ -266,19 +201,27 @@
                         </select>
                     </div>
                     <div class="form-group">
-                        <label>Tipo de usuario</label>
+                        <label for="m-tipo">Tipo de usuario</label>
                         <select name="tipo_usuario" id="m-tipo" required>
                             <option value="USUARIO">Usuario</option>
                             <option value="ADMINISTRADOR">Administrador</option>
                         </select>
                     </div>
                     <div class="form-group full">
-                        <label>Programa de formación</label>
+                        <label for="m-programa">Programa de formación</label>
                         <input type="text" name="programa_formacion" id="m-programa" required>
                     </div>
                     <div class="form-group">
-                        <label>Número de ficha</label>
+                        <label for="m-ficha">Número de ficha</label>
                         <input type="text" name="numero_ficha" id="m-ficha" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="m-nueva-clave">Nueva contraseña</label>
+                        <input type="password" name="nueva_clave" id="m-nueva-clave" minlength="8" maxlength="128" autocomplete="new-password" placeholder="Dejar en blanco para no cambiar">
+                    </div>
+                    <div class="form-group">
+                        <label for="m-confirmar-clave">Confirmar contraseña</label>
+                        <input type="password" name="confirmar_clave" id="m-confirmar-clave" minlength="8" maxlength="128" autocomplete="new-password">
                     </div>
                 </div>
                 <div class="modal-usuario-actions">
@@ -297,18 +240,20 @@
             </div>
 
             <form id="form-agregar-puntos" method="POST" class="points-form">
-                <label>Agregar puntos</label>
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <label for="p-add-qty">Agregar puntos</label>
                 <div class="points-row">
-                    <input type="number" name="puntos" min="1" placeholder="Cantidad" required>
+                    <input type="number" name="puntos" id="p-add-qty" min="1" placeholder="Cantidad" required>
                     <input type="text" name="motivo" placeholder="Motivo">
                     <button type="submit" class="add-points-button">+ Agregar</button>
                 </div>
             </form>
 
             <form id="form-quitar-puntos" method="POST" class="points-form">
-                <label>Quitar puntos</label>
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <label for="p-remove-qty">Quitar puntos</label>
                 <div class="points-row">
-                    <input type="number" name="puntos" min="1" placeholder="Cantidad" required>
+                    <input type="number" name="puntos" id="p-remove-qty" min="1" placeholder="Cantidad" required>
                     <input type="text" name="motivo" placeholder="Motivo">
                     <button type="submit" class="remove-points-button">− Quitar</button>
                 </div>
@@ -324,18 +269,28 @@
 
     </div>
 </div>
+<script src="{{ url_for('static', filename='js/shell.js') }}"></script>
 <script>
-(function(){
-    var h=document.getElementById("mobile-hamburger");
-    var s=document.getElementById("mobile-sidebar");
-    var o=document.getElementById("mobile-overlay");
-    if(h&&s&&o){
-        h.addEventListener("click",function(){s.classList.toggle("mobile-open");o.classList.toggle("active");});
-        o.addEventListener("click",function(){s.classList.remove("mobile-open");o.classList.remove("active");});
-    }
-})();
-
 var usuarioActual = null;
+
+document.querySelectorAll(".manage-button").forEach(function(btn) {
+    btn.addEventListener("click", function() {
+        abrirModalUsuario({
+            id: Number(btn.dataset.id),
+            nombre: btn.dataset.nombre,
+            identificacion: btn.dataset.identificacion,
+            correo: btn.dataset.correo,
+            telefono: btn.dataset.telefono,
+            rol: btn.dataset.rol,
+            tipo: btn.dataset.tipo,
+            programa: btn.dataset.programa,
+            ficha: btn.dataset.ficha,
+            puntos: Number(btn.dataset.puntos),
+            escaneos: Number(btn.dataset.escaneos),
+            esAdmin: btn.dataset.esAdmin === "true"
+        });
+    });
+});
 
 function abrirModalUsuario(u) {
     usuarioActual = u;
@@ -353,6 +308,8 @@ function abrirModalUsuario(u) {
     document.getElementById("m-tipo").value = u.tipo;
     document.getElementById("m-programa").value = u.programa;
     document.getElementById("m-ficha").value = u.ficha;
+    document.getElementById("m-nueva-clave").value = "";
+    document.getElementById("m-confirmar-clave").value = "";
 
     document.getElementById("form-editar-usuario").action = "/admin/usuarios/editar/" + u.id;
     document.getElementById("form-agregar-puntos").action = "/admin/usuarios/puntos/agregar/" + u.id;
@@ -373,6 +330,12 @@ function confirmarEliminar() {
         var f = document.createElement("form");
         f.method = "POST";
         f.action = "/admin/usuarios/eliminar/" + usuarioActual.id;
+        var token = document.querySelector('meta[name="csrf-token"]').getAttribute("content");
+        var campo = document.createElement("input");
+        campo.type = "hidden";
+        campo.name = "csrf_token";
+        campo.value = token;
+        f.appendChild(campo);
         document.body.appendChild(f);
         f.submit();
     }

@@ -9,63 +9,9 @@
 {% endblock %}
 
 {% block content %}
-<div class="admin-dashboard">
-    <div class="mobile-overlay" id="mobile-overlay"></div>
-    <button class="mobile-hamburger" id="mobile-hamburger" aria-label="Abrir menú">&#9776;</button>
-
-    <aside class="admin-sidebar" id="mobile-sidebar">
-        <div class="admin-brand">
-            <div class="admin-logo">
-                <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo SIGIREC">
-            </div>
-            <h1>SIGIREC</h1>
-            <p>Panel administrativo</p>
-        </div>
-
-        <nav class="admin-menu">
-            <span class="admin-menu-title">MENÚ ADMINISTRATIVO</span>
-
-            <a href="{{ url_for('admin_dashboard') }}" class="admin-menu-item">
-                <span class="admin-menu-icon">⌂</span>
-                <span>Dashboard</span>
-            </a>
-            <a href="{{ url_for('admin_usuarios') }}" class="admin-menu-item">
-                <span class="admin-menu-icon">♙</span>
-                <span>Gestión de usuarios</span>
-            </a>
-            <a href="{{ url_for('admin_reciclajes') }}" class="admin-menu-item">
-                <span class="admin-menu-icon">♻</span>
-                <span>Reciclajes</span>
-            </a>
-            <a href="{{ url_for('admin_movimientos') }}" class="admin-menu-item active">
-                <span class="admin-menu-icon">⇄</span>
-                <span>Movimientos</span>
-            </a>
-            <a href="{{ url_for('admin_catalogo') }}" class="admin-menu-item">
-                <span class="admin-menu-icon">▣</span>
-                <span>Catálogo</span>
-            </a>
-            <a href="{{ url_for('admin_auditorias') }}" class="admin-menu-item">
-                <span class="admin-menu-icon">◷</span>
-                <span>Auditorías</span>
-            </a>
-        </nav>
-
-        <div class="admin-sidebar-bottom">
-            <div class="admin-user">
-                <div class="admin-avatar">
-                    {{ session["nombre_completo"][0] }}
-                </div>
-                <div class="admin-user-info">
-                    <strong>{{ session["nombre_completo"] }}</strong>
-                    <span>Administrador</span>
-                </div>
-            </div>
-            <a href="{{ url_for('logout') }}" class="admin-logout">
-                <span>↪</span> Cerrar sesión
-            </a>
-        </div>
-    </aside>
+{% set active_item = "movimientos" %}
+{% set shell_extra_class = "admin-dashboard" %}
+{% include "partials/admin_shell.html" %}
 
     <main class="admin-main">
 
@@ -255,17 +201,7 @@
     </main>
 </div>
 
-<script>
-(function(){
-    var h=document.getElementById("mobile-hamburger");
-    var s=document.getElementById("mobile-sidebar");
-    var o=document.getElementById("mobile-overlay");
-    if(h&&s&&o){
-        h.addEventListener("click",function(){s.classList.toggle("mobile-open");o.classList.toggle("active");});
-        o.addEventListener("click",function(){s.classList.remove("mobile-open");o.classList.remove("active");});
-    }
-})();
-</script>
+<script src="{{ url_for('static', filename='js/shell.js') }}"></script>
 
 <script>
 document.addEventListener("DOMContentLoaded", function () {
@@ -437,9 +373,13 @@ document.addEventListener("DOMContentLoaded", function () {
         btnCanjar.disabled = true;
         btnCanjar.textContent = "Procesando...";
 
+        var csrfMeta = document.querySelector('meta[name="csrf-token"]');
         fetch("/admin/movimientos/canjar", {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": csrfMeta ? csrfMeta.getAttribute("content") : ""
+            },
             body: JSON.stringify({
                 id_usuario: usuarioActual.id_usuario,
                 id_producto: productoActual.id

@@ -1,7 +1,18 @@
+import os
+
 import cv2
 from ultralytics import YOLO
 
-model = YOLO(r"C:\Users\siriu\OneDrive\Escritorio\SigiRec (4)\SigiRec\runs\detect\train-5\weights\best.pt")
+base_dir = os.path.dirname(os.path.abspath(__file__))
+model_path = os.path.join(
+    base_dir,
+    "runs",
+    "detect",
+    "train-5",
+    "weights",
+    "best.pt"
+)
+model = YOLO(model_path)
 cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
 cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)

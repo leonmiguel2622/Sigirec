@@ -45,6 +45,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const MAX_RETRIES = 2;
     const FETCH_TIMEOUT = 55000;
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')
+        ? document.querySelector('meta[name="csrf-token"]').getAttribute("content")
+        : "";
 
 
     function showElement(el) {
@@ -114,15 +117,28 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
+    function escapeHTML(value) {
+        return String(value).replace(/[&<>"']/g, function(caracter) {
+            return {
+                "&": "&amp;",
+                "<": "&lt;",
+                ">": "&gt;",
+                '"': "&quot;",
+                "'": "&#39;"
+            }[caracter];
+        });
+    }
+
     function buildDetectionHTML(detecciones) {
         if (!detecciones || detecciones.length === 0) return "";
         var html = "";
         var iconMap = { "botella": "\u267B", "tapa": "\u25C9", "etiqueta": "\u25A4" };
         detecciones.forEach(function(det) {
+            var clase = escapeHTML(det.clase || "");
             var icon = iconMap[det.clase] || "\u25CF";
-            var conf = (det.confianza * 100).toFixed(1);
+            var conf = (Number(det.confianza) * 100).toFixed(1);
             html += '<div class="detection-item"><span>' + icon + '</span><strong>' +
-                det.clase.toUpperCase() + '</strong><span>' + conf + '%</span></div>';
+                clase.toUpperCase() + '</strong><span>' + conf + '%</span></div>';
         });
         return html;
     }
@@ -145,6 +161,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         return fetch("/api/escanear", {
             method: "POST",
+            headers: { "X-CSRFToken": csrfToken },
             body: formData,
             credentials: "same-origin",
             signal: ctrl.signal
@@ -412,7 +429,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
     recycleButton.addEventListener("click", async function() {
 
-        if (!resultadoAnalisis || !resultadoAnalisis.botella_detectada) return;
+        if (
+            !resultadoAnalisis ||
+            !resultadoAnalisis.botella_detectada ||
+            !resultadoAnalisis.scan_id
+        ) return;
         if (isProcessing) return;
 
         isProcessing = true;
@@ -423,16 +444,12 @@ document.addEventListener("DOMContentLoaded", () => {
         try {
             var response = await fetch("/api/registrar-reciclaje", {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": csrfToken
+                },
                 body: JSON.stringify({
-                    botella_detectada: resultadoAnalisis.botella_detectada,
-                    tapa_detectada: resultadoAnalisis.tapa_detectada,
-                    etiqueta_detectada: resultadoAnalisis.etiqueta_detectada,
-                    confianza: resultadoAnalisis.confianza,
-                    puntos_base: resultadoAnalisis.puntos_base,
-                    puntos_tapa: resultadoAnalisis.puntos_tapa,
-                    puntos_etiqueta: resultadoAnalisis.puntos_etiqueta,
-                    puntos: resultadoAnalisis.puntos
+                    scan_id: resultadoAnalisis.scan_id
                 }),
                 credentials: "same-origin"
             });

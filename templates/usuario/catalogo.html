@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block title %}Catálogo | SIGIREC{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/catalogo.css') }}">
+{% endblock %}
+
+{% block content %}
+
+<div class="dashboard">
+
+    {% set active_item = "catalogo" %}
+    {% include "partials/user_shell.html" %}
+
+    <main class="dashboard-main">
+
+        <header class="dashboard-header">
+            <div>
+                <span class="page-label">CATÁLOGO DE CANJE</span>
+                <h2>Canjea tus <span>SIGIPUNTOS</span></h2>
+                <p>Elige un producto de la recompensa disponible y canjéalo en el punto físico.</p>
+            </div>
+            <div class="header-user">
+                <div class="header-avatar">{{ usuario.nombre_completo[0] }}</div>
+                <div>
+                    <strong>{{ usuario.nombre_completo }}</strong>
+                    <span>ID {{ usuario.numero_identificacion }}</span>
+                </div>
+            </div>
+        </header>
+
+        <section class="points-card">
+            <div class="points-information">
+                <span class="card-label">TU SALDO</span>
+                <div class="points-number">
+                    <strong>{{ usuario.puntos_totales }}</strong>
+                </div>
+                <p>SIGIPUNTOS disponibles para canje</p>
+            </div>
+            <div class="points-icon">▣</div>
+        </section>
+
+        <section class="catalogo-section">
+            <span class="card-label">PRODUCTOS DISPONIBLES</span>
+            <h3>Recompensas activas</h3>
+
+            {% if productos %}
+                <div class="catalogo-grid">
+                    {% for producto in productos %}
+                        <article class="product-card{% if producto.stock <= 0 %} agotado{% endif %}">
+                            <div class="product-media">
+                                <img src="{{ url_for('static', filename='img/' ~ producto.imagen) }}" alt="{{ producto.nombre }}">
+                                {% if producto.stock <= 0 %}
+                                    <span class="product-stock-badge out">AGOTADO</span>
+                                {% elif producto.stock <= 5 %}
+                                    <span class="product-stock-badge low">ÚLTIMAS {{ producto.stock }} UNIDADES</span>
+                                {% endif %}
+                            </div>
+                            <div class="product-body">
+                                <div class="product-points">
+                                    <strong>{{ producto.costo_puntos }}</strong>
+                                    <span>SIGIPUNTOS</span>
+                                </div>
+                                <h3>{{ producto.nombre }}</h3>
+                                <p>{{ producto.descripcion }}</p>
+                            </div>
+                        </article>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <div class="empty-icon">▣</div>
+                    <h4>El catálogo está vacío por ahora</h4>
+                    <p>Cuando el administrador agregue recompensas, aparecerán aquí.</p>
+                </div>
+            {% endif %}
+        </section>
+
+    </main>
+</div>
+<script src="{{ url_for('static', filename='js/shell.js') }}"></script>
+{% endblock %}

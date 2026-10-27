@@ -1,4 +1,6 @@
 Flask
+Flask-WTF>=1.2,<2
+python-dotenv
 gunicorn
 mysql-connector-python
 opencv-python-headless

@@ -1,0 +1,489 @@
+{% extends "base.html" %}
+
+{% set modo = modo|default("login") %}
+
+{% macro mensajes() %}
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="auth-alerts">
+                {% for category, message in messages %}
+                    {% set es_exito = category == "success" %}
+                    <div
+                        class="auth-alert auth-alert--{{ 'success' if es_exito else 'danger' }}"
+                        role="{{ 'status' if es_exito else 'alert' }}"
+                    >
+                        <svg class="auth-alert__icon" aria-hidden="true" focusable="false">
+                            <use href="#auth-icon-{{ 'check' if es_exito else 'alert' }}"></use>
+                        </svg>
+                        <p>{{ message }}</p>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+{% endmacro %}
+
+{% block title %}
+    {{ "Crear cuenta" if modo == "register" else "Iniciar sesión" }} | SIGIREC
+{% endblock %}
+
+{% block extra_css %}
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='css/auth.css') }}"
+    >
+{% endblock %}
+
+{% block content %}
+
+<svg class="auth-sprite" aria-hidden="true" focusable="false">
+    <symbol id="auth-icon-arrow" viewBox="0 0 24 24">
+        <path d="M5 12h14M13 6l6 6-6 6"></path>
+    </symbol>
+    <symbol id="auth-icon-chevron" viewBox="0 0 24 24">
+        <path d="m7 9 5 5 5-5"></path>
+    </symbol>
+    <symbol id="auth-icon-eye" viewBox="0 0 24 24">
+        <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"></path>
+        <circle cx="12" cy="12" r="2.6"></circle>
+    </symbol>
+    <symbol id="auth-icon-eye-off" viewBox="0 0 24 24">
+        <path d="m4 4 16 16"></path>
+        <path d="M9.6 6.5A9.8 9.8 0 0 1 12 6c6 0 9.5 6 9.5 6a15 15 0 0 1-3.1 3.7"></path>
+        <path d="M6.4 7.6A15.9 15.9 0 0 0 2.5 12s3.5 6 9.5 6a9.8 9.8 0 0 0 4.2-.9"></path>
+        <path d="M10.1 10.1a2.7 2.7 0 0 0 3.8 3.8"></path>
+    </symbol>
+    <symbol id="auth-icon-alert" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="9"></circle>
+        <path d="M12 7.5v5.2"></path>
+        <path d="M12 16.6h.01"></path>
+    </symbol>
+    <symbol id="auth-icon-check" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="9"></circle>
+        <path d="m8 12.3 2.6 2.6 5.5-6"></path>
+    </symbol>
+</svg>
+
+<div class="auth-page">
+
+    <div class="auth-atmosphere" aria-hidden="true">
+        <span class="auth-glow auth-glow--one"></span>
+        <span class="auth-glow auth-glow--two"></span>
+        <span class="auth-glow auth-glow--three"></span>
+    </div>
+
+    <div
+        class="auth-stage"
+        data-auth-root
+        data-mode="{{ modo }}"
+    >
+
+        <aside class="auth-identity">
+
+            <div class="auth-brand-lockup">
+
+                <div class="auth-logo">
+                    <img
+                        src="{{ url_for('static', filename='img/logo.png') }}"
+                        alt=""
+                        width="716"
+                        height="747"
+                        fetchpriority="high"
+                    >
+                </div>
+
+                <div class="auth-brand-lockup__copy">
+                    <h1 class="auth-sr-only">SIGIREC</h1>
+                    <p class="auth-tagline">
+                        Sistema de Gestión Inteligente
+                        de Recolección de Reciclaje
+                    </p>
+                </div>
+
+            </div>
+
+            <div class="auth-identity__body">
+
+                <p class="auth-claim">
+                    <span>Recicla.</span>
+                    <span>Suma. Transforma.</span>
+                </p>
+
+                <p class="auth-description">
+                    Cada botella que registras se convierte en SIGIPUNTOS
+                    para canjear por productos ecológicos.
+                </p>
+
+            </div>
+
+            <div class="auth-reward">
+
+                <p class="auth-reward__total">
+                    <strong>65</strong>
+                    <span>SIGIPUNTOS</span>
+                </p>
+
+                <p class="auth-reward__copy">
+                    por una botella completa detectada por la IA.
+                </p>
+
+                <ul class="auth-parts" aria-label="Puntos por cada elemento detectado">
+                    <li><b>50</b> botella</li>
+                    <li><b>10</b> tapa</li>
+                    <li><b>5</b> etiqueta</li>
+                </ul>
+
+            </div>
+
+        </aside>
+
+        <section class="auth-form-shell" aria-label="Acceso a SIGIREC">
+
+            <nav class="auth-switch" aria-label="Seleccionar formulario">
+                <span class="auth-switch__indicator" aria-hidden="true"></span>
+                <a
+                    href="{{ url_for('login') }}"
+                    data-auth-switch="login"
+                    {% if modo == "login" %}aria-current="page"{% endif %}
+                >
+                    Ingresar
+                </a>
+                <a
+                    href="{{ url_for('register') }}"
+                    data-auth-switch="register"
+                    {% if modo == "register" %}aria-current="page"{% endif %}
+                >
+                    Crear cuenta
+                </a>
+            </nav>
+
+            <div class="auth-panels">
+
+                <section
+                    class="auth-panel auth-panel--login"
+                    id="auth-panel-login"
+                    data-auth-panel="login"
+                    aria-labelledby="auth-title-login"
+                    {% if modo != "login" %}inert aria-hidden="true"{% endif %}
+                >
+
+                    <header class="auth-heading">
+                        <h2 id="auth-title-login" tabindex="-1">Iniciar sesión</h2>
+                        <p>Ingresa con tu identificación y contraseña.</p>
+                    </header>
+
+                    {% if modo == "login" %}
+                        {{ mensajes() }}
+                    {% endif %}
+
+                    <form
+                        class="auth-form auth-form--login"
+                        action="{{ url_for('login') }}"
+                        method="POST"
+                        autocomplete="on"
+                    >
+
+                        <input
+                            type="hidden"
+                            name="csrf_token"
+                            value="{{ csrf_token() }}"
+                        >
+
+                        <div class="auth-field">
+                            <label for="login-identificacion">
+                                Número de identificación
+                            </label>
+                            <input
+                                type="text"
+                                id="login-identificacion"
+                                name="numero_identificacion"
+                                placeholder="Ingresa tu identificación"
+                                maxlength="30"
+                                autocomplete="username"
+                                spellcheck="false"
+                                required
+                            >
+                        </div>
+
+                        <div class="auth-field">
+                            <label for="login-clave">
+                                Contraseña
+                            </label>
+                            <div class="auth-input-wrap">
+                                <input
+                                    type="password"
+                                    id="login-clave"
+                                    name="clave"
+                                    placeholder="Ingresa tu contraseña"
+                                    minlength="8"
+                                    maxlength="128"
+                                    autocomplete="current-password"
+                                    required
+                                >
+                                <button
+                                    type="button"
+                                    class="auth-visibility"
+                                    data-password-toggle
+                                    aria-controls="login-clave"
+                                    aria-pressed="false"
+                                    aria-label="Mostrar contraseña"
+                                >
+                                    <svg class="auth-eye auth-eye--show" aria-hidden="true" focusable="false">
+                                        <use href="#auth-icon-eye"></use>
+                                    </svg>
+                                    <svg class="auth-eye auth-eye--hide" aria-hidden="true" focusable="false">
+                                        <use href="#auth-icon-eye-off"></use>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="auth-submit">
+                            <span>Iniciar sesión</span>
+                            <svg class="auth-submit__arrow" aria-hidden="true" focusable="false">
+                                <use href="#auth-icon-arrow"></use>
+                            </svg>
+                        </button>
+
+                    </form>
+
+                </section>
+
+                <section
+                    class="auth-panel auth-panel--register"
+                    id="auth-panel-register"
+                    data-auth-panel="register"
+                    aria-labelledby="auth-title-register"
+                    {% if modo != "register" %}inert aria-hidden="true"{% endif %}
+                >
+
+                    <header class="auth-heading">
+                        <h2 id="auth-title-register" tabindex="-1">Crear cuenta</h2>
+                        <p>Regístrate para comenzar a acumular SIGIPUNTOS.</p>
+                    </header>
+
+                    {% if modo == "register" %}
+                        {{ mensajes() }}
+                    {% endif %}
+
+                    <form
+                        class="auth-form auth-form--register"
+                        action="{{ url_for('register') }}"
+                        method="POST"
+                        autocomplete="on"
+                    >
+
+                        <input
+                            type="hidden"
+                            name="csrf_token"
+                            value="{{ csrf_token() }}"
+                        >
+
+                        <div class="auth-field auth-field--span-12">
+                            <label for="registro-nombre">
+                                Nombre completo
+                            </label>
+                            <input
+                                type="text"
+                                id="registro-nombre"
+                                name="nombre_completo"
+                                placeholder="Ej: Nombre Apellido"
+                                maxlength="150"
+                                autocomplete="name"
+                                required
+                            >
+                        </div>
+
+                        <div class="auth-field auth-field--span-5">
+                            <label for="registro-identificacion">
+                                Número de identificación
+                            </label>
+                            <input
+                                type="text"
+                                id="registro-identificacion"
+                                name="numero_identificacion"
+                                placeholder="Ej: 1234567890"
+                                maxlength="30"
+                                autocomplete="username"
+                                spellcheck="false"
+                                required
+                            >
+                        </div>
+
+                        <div class="auth-field auth-field--span-7">
+                            <label for="registro-correo">
+                                Correo electrónico
+                            </label>
+                            <input
+                                type="email"
+                                id="registro-correo"
+                                name="correo"
+                                placeholder="Ej: correo@gmail.com"
+                                maxlength="150"
+                                autocomplete="email"
+                                autocapitalize="none"
+                                spellcheck="false"
+                                required
+                            >
+                        </div>
+
+                        <div class="auth-field auth-field--span-5">
+                            <label for="registro-telefono">
+                                Teléfono
+                                <span class="auth-label-note">Opcional</span>
+                            </label>
+                            <input
+                                type="text"
+                                id="registro-telefono"
+                                name="telefono"
+                                placeholder="Ej: 3001234567"
+                                maxlength="20"
+                                autocomplete="tel"
+                                inputmode="tel"
+                            >
+                        </div>
+
+                        <div class="auth-field auth-field--span-7">
+                            <label for="registro-rol">
+                                Rol
+                            </label>
+                            <div class="auth-select-wrap">
+                                <select id="registro-rol" name="rol" required>
+                                    <option value="" selected disabled>
+                                        Selecciona tu rol
+                                    </option>
+                                    <option value="APRENDIZ">Aprendiz</option>
+                                    <option value="INSTRUCTOR">Instructor</option>
+                                    <option value="AREA_ADMINISTRATIVA">
+                                        Área administrativa
+                                    </option>
+                                    <option value="EXTERNO">Externo</option>
+                                </select>
+                                <svg class="auth-select-arrow" aria-hidden="true" focusable="false">
+                                    <use href="#auth-icon-chevron"></use>
+                                </svg>
+                            </div>
+                        </div>
+
+                        <div class="auth-field auth-field--span-7">
+                            <label for="registro-programa">
+                                Programa de formación
+                            </label>
+                            <input
+                                type="text"
+                                id="registro-programa"
+                                name="programa_formacion"
+                                placeholder="Ej: Análisis y Desarrollo de Software"
+                                maxlength="150"
+                                required
+                            >
+                        </div>
+
+                        <div class="auth-field auth-field--span-5">
+                            <label for="registro-ficha">
+                                Número de ficha
+                            </label>
+                            <input
+                                type="text"
+                                id="registro-ficha"
+                                name="numero_ficha"
+                                placeholder="Ej: 3139687"
+                                maxlength="30"
+                                spellcheck="false"
+                                required
+                            >
+                        </div>
+
+                        <div class="auth-field auth-field--span-6">
+                            <label for="registro-clave">
+                                Contraseña
+                            </label>
+                            <div class="auth-input-wrap">
+                                <input
+                                    type="password"
+                                    id="registro-clave"
+                                    name="clave"
+                                    placeholder="Mínimo 8 caracteres"
+                                    minlength="8"
+                                    maxlength="128"
+                                    autocomplete="new-password"
+                                    required
+                                >
+                                <button
+                                    type="button"
+                                    class="auth-visibility"
+                                    data-password-toggle
+                                    aria-controls="registro-clave"
+                                    aria-pressed="false"
+                                    aria-label="Mostrar contraseña"
+                                >
+                                    <svg class="auth-eye auth-eye--show" aria-hidden="true" focusable="false">
+                                        <use href="#auth-icon-eye"></use>
+                                    </svg>
+                                    <svg class="auth-eye auth-eye--hide" aria-hidden="true" focusable="false">
+                                        <use href="#auth-icon-eye-off"></use>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="auth-field auth-field--span-6">
+                            <label for="registro-confirmar">
+                                Confirmar contraseña
+                            </label>
+                            <div class="auth-input-wrap">
+                                <input
+                                    type="password"
+                                    id="registro-confirmar"
+                                    name="confirmar_clave"
+                                    placeholder="Repite la contraseña"
+                                    minlength="8"
+                                    maxlength="128"
+                                    autocomplete="new-password"
+                                    required
+                                >
+                                <button
+                                    type="button"
+                                    class="auth-visibility"
+                                    data-password-toggle
+                                    aria-controls="registro-confirmar"
+                                    aria-pressed="false"
+                                    aria-label="Mostrar contraseña"
+                                >
+                                    <svg class="auth-eye auth-eye--show" aria-hidden="true" focusable="false">
+                                        <use href="#auth-icon-eye"></use>
+                                    </svg>
+                                    <svg class="auth-eye auth-eye--hide" aria-hidden="true" focusable="false">
+                                        <use href="#auth-icon-eye-off"></use>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="auth-submit auth-field--span-12">
+                            <span>Crear cuenta</span>
+                            <svg class="auth-submit__arrow" aria-hidden="true" focusable="false">
+                                <use href="#auth-icon-arrow"></use>
+                            </svg>
+                        </button>
+
+                    </form>
+
+                </section>
+
+            </div>
+
+        </section>
+
+    </div>
+
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+    <script
+        src="{{ url_for('static', filename='js/auth.js') }}"
+        defer
+    ></script>
+{% endblock %}

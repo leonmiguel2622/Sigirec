@@ -1,0 +1,78 @@
+/* SIGIREC — tokens de diseño (única fuente de verdad)
+   Prefijo --sh- para no colisionar con variables legacy de style.css */
+
+:root {
+
+    /* --- Superficies (4 niveles + estados) --- */
+    --sh-bg-950: #040906;
+    --sh-bg-900: #070b09;
+    --sh-bg-base: #080c09;
+    --sh-bg-850: #0a0f0c;
+    --sh-bg-element: #0c120e;
+    --sh-bg-card: #111a16;
+    --sh-bg-card-alt: #101b12;
+    --sh-bg-hover: #142016;
+    --sh-bg-raised: #18231b;
+    --sh-bg-active: #1a2b1c;
+    --sh-bg-hover-strong: #1d2b21;
+
+    /* --- Acentos --- */
+    --sh-accent: #91ff66;
+    --sh-accent-soft: #7cff6b;
+    --sh-accent-hover: #96ff87;
+    --sh-accent-dark: #35c94e;
+    --sh-accent-glow: rgba(124, 255, 107, 0.35);
+
+    /* --- Texto --- */
+    --sh-text-primary: #edf2ee;
+    --sh-text-bright: #f1f5f2;
+    --sh-text-secondary: #dce5de;
+    --sh-text-muted: #9aa7a0;
+    --sh-text-dim: #77837b;
+
+    /* --- Semánticos --- */
+    --sh-danger: #ff7c7c;
+    --sh-danger-strong: #ff6b6b;
+    --sh-warning: #d8b85a;
+    --sh-success: #2ecc71;
+
+    /* --- Líneas --- */
+    --sh-line-strong: rgba(124, 255, 107, 0.30);
+    --sh-line: rgba(124, 255, 107, 0.18);
+    --sh-line-soft: rgba(124, 255, 107, 0.12);
+    --sh-line-neutral: rgba(255, 255, 255, 0.06);
+
+    /* --- Radios --- */
+    --sh-radius-xs: 6px;
+    --sh-radius-sm: 8px;
+    --sh-radius: 10px;
+    --sh-radius-md: 12px;
+    --sh-radius-lg: 16px;
+    --sh-radius-xl: 20px;
+    --sh-radius-pill: 999px;
+
+    /* --- Espaciado (escala 4pt) --- */
+    --sh-space-1: 4px;
+    --sh-space-2: 8px;
+    --sh-space-3: 12px;
+    --sh-space-4: 16px;
+    --sh-space-5: 20px;
+    --sh-space-6: 24px;
+    --sh-space-8: 32px;
+    --sh-space-10: 40px;
+    --sh-space-12: 48px;
+
+    /* --- Tipografía --- */
+    --sh-font: "Segoe UI", Arial, sans-serif;
+    --sh-text-11: 11px;
+    --sh-text-12: 12px;
+    --sh-text-13: 13px;
+    --sh-text-14: 14px;
+    --sh-text-16: 16px;
+    --sh-text-20: 20px;
+    --sh-text-24: 24px;
+    --sh-text-31: 31px;
+
+    /* --- Movimiento --- */
+    --sh-speed: 0.25s;
+}

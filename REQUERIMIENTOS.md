@@ -15,11 +15,10 @@ El **PM lidera** esta reunión y es el canal con el instructor (que hace de clie
 - **Integrantes y roles:**
   | Integrante | Rol | Responsable de |
   |-----------|-----|----------------|
-  | Camilo Hernandez | ⚙️ DevOps | Repo, Git, CI/CD, despliegue |
-  | Miguel Leon | 🎨 Frontend | Interfaz, estilos, interacción |
-  | Santiago Sanchez | 🎨 Frontend | Interfaz, estilos, interacción |
-  | Karen Forero | 🔧 Backend | Servidor, API, lógica + BD |
-  | Andres Forero | 🔧 Backend / 🧭 PM | Servidor, API, lógica + BD / Canal con el cliente, QA, entregas, desbloquear al equipo |
+  | Miguel Angel Leon Oliveros | 🎨 Frontend | Interfaz, estilos, interacción |
+  | Camilo Andres Hernandez Romero | ⚙️ DevOps | Repo, Git, CI/CD, despliegue |
+  | Santiago Sanchez Mogollon | 🎨 Frontend | Interfaz, estilos, interacción |
+  | Karen Dayana Forero Rueda | 🔧 Backend | Servidor, API, lógica + BD |
 
 > **Datos** y la **feature clave** las conoce y las trabaja **todo el equipo** (son la estructura del
 > proyecto, no un rol aparte).

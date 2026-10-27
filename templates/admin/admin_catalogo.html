@@ -8,61 +8,8 @@
 {% endblock %}
 
 {% block content %}
-<div class="admin-layout">
-    <div class="mobile-overlay" id="mobile-overlay"></div>
-    <button class="mobile-hamburger" id="mobile-hamburger" aria-label="Abrir menú">&#9776;</button>
-    <!-- SIDEBAR -->
-    <aside class="admin-sidebar" id="mobile-sidebar">
-        <div class="admin-brand">
-            <div class="admin-logo">
-                <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo SIGIREC">
-            </div>
-            <h1>SIGIREC</h1>
-            <p>Panel administrativo</p>
-        </div>
-        <nav class="admin-nav">
-            <span class="admin-menu-title">MENÚ ADMINISTRATIVO</span>
-            <a href="{{ url_for('admin_dashboard') }}" class="admin-nav-item">
-                <span class="admin-nav-icon">⌂</span>
-                <span>Dashboard</span>
-            </a>
-            <a href="{{ url_for('admin_usuarios') }}" class="admin-nav-item">
-                <span class="admin-nav-icon">♙</span>
-                <span>Gestión de usuarios</span>
-            </a>
-            <a href="{{ url_for('admin_reciclajes') }}" class="admin-nav-item">
-                <span class="admin-nav-icon">♻</span>
-                <span>Reciclajes</span>
-            </a>
-            <a href="{{ url_for('admin_movimientos') }}" class="admin-nav-item">
-                <span class="admin-nav-icon">⇄</span>
-                <span>Movimientos</span>
-            </a>
-            <a href="{{ url_for('admin_catalogo') }}" class="admin-nav-item active">
-                <span class="admin-nav-icon">▣</span>
-                <span>Catálogo</span>
-            </a>
-            <a href="{{ url_for('admin_auditorias') }}" class="admin-nav-item">
-                <span class="admin-nav-icon">◷</span>
-                <span>Auditorías</span>
-            </a>
-        </nav>
-        <div class="admin-sidebar-bottom">
-            <div class="admin-user-box">
-                <div class="admin-avatar">
-                    {{ session["nombre_completo"][0] }}
-                </div>
-                <div class="admin-user-info">
-                    <strong>{{ session["nombre_completo"] }}</strong>
-                    <span>ADMINISTRADOR</span>
-                </div>
-            </div>
-            <a href="{{ url_for('logout') }}" class="admin-logout">
-                <span>↪</span>
-                <span>Cerrar sesión</span>
-            </a>
-        </div>
-    </aside>
+{% set active_item = "catalogo" %}
+{% include "partials/admin_shell.html" %}
 
     <!-- CONTENIDO -->
     <main class="admin-main">
@@ -155,15 +102,5 @@
         </section>
     </main>
 </div>
-<script>
-(function(){
-    var h=document.getElementById("mobile-hamburger");
-    var s=document.getElementById("mobile-sidebar");
-    var o=document.getElementById("mobile-overlay");
-    if(h&&s&&o){
-        h.addEventListener("click",function(){s.classList.toggle("mobile-open");o.classList.toggle("active");});
-        o.addEventListener("click",function(){s.classList.remove("mobile-open");o.classList.remove("active");});
-    }
-})();
-</script>
+<script src="{{ url_for('static', filename='js/shell.js') }}"></script>
 {% endblock %}

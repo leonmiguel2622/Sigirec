@@ -1,0 +1,53 @@
+{% set __items = {
+    "dashboard": ("admin_dashboard", "⌂", "Dashboard"),
+    "usuarios": ("admin_usuarios", "♙", "Gestión de usuarios"),
+    "reciclajes": ("admin_reciclajes", "♻", "Reciclajes"),
+    "movimientos": ("admin_movimientos", "⇄", "Movimientos"),
+    "catalogo": ("admin_catalogo", "▣", "Catálogo"),
+    "auditorias": ("admin_auditorias", "◷", "Auditorías")
+} %}
+<div class="admin-layout{% if shell_extra_class %} {{ shell_extra_class }}{% endif %}">
+    <div class="mobile-overlay" id="mobile-overlay"></div>
+    <button class="mobile-hamburger" id="mobile-hamburger" aria-label="Abrir menú" aria-controls="mobile-sidebar" aria-expanded="false">&#9776;</button>
+
+    <aside class="admin-sidebar" id="mobile-sidebar">
+        <div class="admin-brand">
+            <div class="admin-logo">
+                <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo SIGIREC">
+            </div>
+            <h1>SIGIREC</h1>
+            <p>Panel administrativo</p>
+        </div>
+
+        <nav class="admin-nav" aria-label="Menú administrativo">
+            <span class="admin-menu-title">MENÚ ADMINISTRATIVO</span>
+
+            {% for key, item in __items.items() %}
+            {% if key == active_item %}
+            <a href="{{ url_for(item[0]) }}" class="admin-nav-item active" aria-current="page">
+            {% else %}
+            <a href="{{ url_for(item[0]) }}" class="admin-nav-item">
+            {% endif %}
+                <span class="admin-nav-icon" aria-hidden="true">{{ item[1] }}</span>
+                <span>{{ item[2] }}</span>
+            </a>
+            {% endfor %}
+        </nav>
+
+        <div class="admin-sidebar-bottom">
+            <div class="admin-user-box">
+                <div class="admin-avatar">
+                    {{ session["nombre_completo"][0] }}
+                </div>
+                <div class="admin-user-info">
+                    <strong>{{ session["nombre_completo"] }}</strong>
+                    <span>ADMINISTRADOR</span>
+                </div>
+            </div>
+
+            <a href="{{ url_for('logout') }}" class="admin-logout">
+                <span aria-hidden="true">↪</span>
+                <span>Cerrar sesión</span>
+            </a>
+        </div>
+    </aside>

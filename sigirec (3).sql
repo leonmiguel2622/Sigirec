@@ -313,11 +313,11 @@ CREATE TABLE `usuarios` (
 --
 
 INSERT INTO `usuarios` (`id_usuario`, `numero_identificacion`, `nombre_completo`, `correo`, `telefono`, `tipo_usuario`, `rol`, `programa_formacion`, `numero_ficha`) VALUES
-(1, '1099741266', 'Andres', 'siriusplanet76@gmail.com', '3153806797', 'ADMINISTRADOR', 'APRENDIZ', 'Adso', '3139687'),
-(3, '1', 'petroskyyyyyyyy', 'asdj@gmail.com', '12313', 'USUARIO', 'EXTERNO', 'sadad', '3242424'),
-(5, '1358965789', 'dev', 'habieruduxing@gmail.com', '3158749685', 'USUARIO', 'INSTRUCTOR', 'adso', '31389578'),
-(6, '1098638786', 'carlos chaparro', 'correofalso@gmail.com', '3203257689', 'USUARIO', 'INSTRUCTOR', 'Adso', '3136876'),
-(7, '12478568', 'karen', 'karen@gmail.com', '3186547525', 'USUARIO', 'APRENDIZ', 'ADSO', '3139687');
+(1, '0000000000', 'Administrador SIGIREC', 'admin@sigirec.invalid', NULL, 'ADMINISTRADOR', 'AREA_ADMINISTRATIVA', 'SIGIREC', '0000000'),
+(3, '3000000003', 'Usuario de prueba 3', 'usuario3@sigirec.invalid', NULL, 'USUARIO', 'EXTERNO', 'Prueba', '0000003'),
+(5, '3000000005', 'Usuario de prueba 5', 'usuario5@sigirec.invalid', NULL, 'USUARIO', 'INSTRUCTOR', 'Prueba', '0000005'),
+(6, '3000000006', 'Usuario de prueba 6', 'usuario6@sigirec.invalid', NULL, 'USUARIO', 'INSTRUCTOR', 'Prueba', '0000006'),
+(7, '3000000007', 'Usuario de prueba 7', 'usuario7@sigirec.invalid', NULL, 'USUARIO', 'APRENDIZ', 'Prueba', '0000007');
 
 --
 -- Índices para tablas volcadas

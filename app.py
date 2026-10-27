@@ -1,14 +1,18 @@
-import cv2
-import numpy as np
 import base64
 import os
+import secrets
+import threading
+import time
 import traceback
+from collections import defaultdict, deque
+from datetime import timedelta
 
 os.environ.setdefault("OMP_NUM_THREADS", "1")
 os.environ.setdefault("MKL_NUM_THREADS", "1")
 
 from flask import (
     Flask,
+    g,
     request,
     jsonify,
     session,
@@ -17,46 +21,190 @@ from flask import (
     render_template,
     flash
 )
-
-from ultralytics import YOLO
+from flask_wtf.csrf import CSRFError, CSRFProtect
+from werkzeug.middleware.proxy_fix import ProxyFix
+from werkzeug.security import check_password_hash, generate_password_hash
 
 from conexion import obtener_conexion
+
+try:
+    import cv2
+    import numpy as np
+    vision_error = None
+except Exception as e:
+    cv2 = None
+    np = None
+    vision_error = str(e)
+
+try:
+    from ultralytics import YOLO
+except Exception as e:
+    YOLO = None
+    yolo_import_error = str(e)
+else:
+    yolo_import_error = None
 
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
+try:
+    from dotenv import load_dotenv
+except ImportError:
+    pass
+else:
+    load_dotenv(os.path.join(BASE_DIR, ".env"))
+
+DATA_DIR = os.getenv("SIGIREC_DATA_DIR") or os.path.join(BASE_DIR, "instance")
+ES_PRODUCCION = bool(
+    os.getenv("RENDER")
+    or os.getenv("SIGIREC_ENV", "").lower() == "production"
+    or os.getenv("FLASK_ENV", "").lower() == "production"
+)
+
+PUNTOS_BASE = 50
+PUNTOS_TAPA = 10
+PUNTOS_ETIQUETA = 5
+CONFIANZA_MINIMA = float(os.getenv("SIGIREC_MIN_CONFIDENCE", "0.40"))
+
+
+class RateLimiter:
+    def __init__(self, limite, ventana_segundos):
+        self.limite = limite
+        self.ventana = ventana_segundos
+        self.eventos = defaultdict(deque)
+        self.lock = threading.Lock()
+
+    def permitido(self, clave):
+        ahora = time.monotonic()
+        with self.lock:
+            eventos = self.eventos[clave]
+            while eventos and ahora - eventos[0] >= self.ventana:
+                eventos.popleft()
+            if len(eventos) >= self.limite:
+                return False
+            eventos.append(ahora)
+            return True
+
+
+login_limiter = RateLimiter(10, 300)
+scan_limiter = RateLimiter(20, 60)
+register_limiter = RateLimiter(10, 60)
+
+
+def cargar_secret_key():
+    clave = os.getenv("SIGIREC_SECRET_KEY") or os.getenv("SECRET_KEY")
+    if clave:
+        return clave
+
+    if ES_PRODUCCION:
+        raise RuntimeError(
+            "Configura SIGIREC_SECRET_KEY o SECRET_KEY en producción."
+        )
+
+    os.makedirs(DATA_DIR, exist_ok=True)
+    ruta = os.path.join(DATA_DIR, "secret_key")
+
+    try:
+        descriptor = os.open(
+            ruta,
+            os.O_WRONLY | os.O_CREAT | os.O_EXCL,
+            0o600
+        )
+    except FileExistsError:
+        with open(ruta, "r", encoding="utf-8") as archivo:
+            clave = archivo.read().strip()
+        if not clave:
+            raise RuntimeError("El archivo de clave de sesión está vacío.")
+        return clave
+
+    try:
+        clave = secrets.token_hex(32)
+        with os.fdopen(descriptor, "w", encoding="utf-8") as archivo:
+            archivo.write(clave)
+    finally:
+        try:
+            os.chmod(ruta, 0o600)
+        except OSError:
+            pass
+
+    return clave
+
+
+def calcular_puntos(detecciones, confianza):
+    if not detecciones.get("botella"):
+        return 0, 0, 0, 0
+
+    if confianza < CONFIANZA_MINIMA:
+        return 0, 0, 0, 0
+
+    puntos_base = PUNTOS_BASE
+    puntos_tapa = PUNTOS_TAPA if detecciones.get("tapa") else 0
+    puntos_etiqueta = PUNTOS_ETIQUETA if detecciones.get("etiqueta") else 0
+
+    return (
+        puntos_base,
+        puntos_tapa,
+        puntos_etiqueta,
+        puntos_base + puntos_tapa + puntos_etiqueta
+    )
+
+
 model = None
 model_error = None
 
-try:
-    model_path = os.path.join(
-        BASE_DIR,
-        'runs', 'detect',
-        'train-5', 'weights',
-        'best.pt'
-    )
-
-    if not os.path.exists(model_path):
-        raise FileNotFoundError(
-            "Modelo no encontrado en: " + model_path
+if YOLO is None:
+    model_error = "Ultralytics no está instalado: " + (yolo_import_error or "desconocido")
+    print("======================================")
+    print("ERROR CARGANDO MODELO:", model_error)
+    print("======================================")
+else:
+    try:
+        model_path = os.path.join(
+            BASE_DIR,
+            'runs', 'detect',
+            'train-5', 'weights',
+            'best.pt'
         )
 
-    model = YOLO(model_path)
+        if not os.path.exists(model_path):
+            raise FileNotFoundError(
+                "Modelo no encontrado en: " + model_path
+            )
 
-    print("======================================")
-    print("MODELO SIGIREC CARGADO")
-    print("RUTA:", model.ckpt_path)
-    print("CLASES:", model.names)
-    print("======================================")
+        model = YOLO(model_path)
 
-except Exception as e:
-    model_error = str(e)
-    print("======================================")
-    print("ERROR CARGANDO MODELO:", e)
-    print("======================================")
+        print("======================================")
+        print("MODELO SIGIREC CARGADO")
+        print("RUTA:", model.ckpt_path)
+        print("CLASES:", model.names)
+        print("======================================")
+
+    except Exception as e:
+        model_error = str(e)
+        print("======================================")
+        print("ERROR CARGANDO MODELO:", e)
+        print("======================================")
 
 app = Flask(__name__)
-app.secret_key = "SIGIREC_CAMBIAR_ESTA_CLAVE"
+app.secret_key = cargar_secret_key()
+app.config.update(
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SAMESITE="Lax",
+    SESSION_COOKIE_SECURE=ES_PRODUCCION,
+    PERMANENT_SESSION_LIFETIME=timedelta(hours=8),
+    MAX_CONTENT_LENGTH=10 * 1024 * 1024,
+    WTF_CSRF_TIME_LIMIT=8 * 60 * 60
+)
+
+if ES_PRODUCCION or os.getenv("TRUST_PROXY") == "1":
+    app.wsgi_app = ProxyFix(
+        app.wsgi_app,
+        x_for=1,
+        x_proto=1,
+        x_host=1
+    )
+
+csrf = CSRFProtect(app)
 
 cors_origins = [
     origin.strip()
@@ -67,18 +215,128 @@ cors_origins = [
     if origin.strip()
 ]
 
+
+@app.before_request
+def validar_sesion():
+    if request.endpoint in {"static", "index", "login", "register", "logout"}:
+        return None
+
+    if "id_usuario" not in session:
+        return None
+
+    es_api = request.path.startswith("/api/")
+    conexion = obtener_conexion()
+
+    if conexion is None:
+        if es_api:
+            return jsonify({"error": "Base de datos no disponible."}), 503
+        session.clear()
+        flash("No fue posible validar la sesión.", "danger")
+        return redirect(url_for("login"))
+
+    cursor = conexion.cursor(dictionary=True)
+
+    try:
+        cursor.execute(
+            """
+            SELECT
+                id_usuario,
+                nombre_completo,
+                numero_identificacion,
+                tipo_usuario,
+                rol
+            FROM usuarios
+            WHERE id_usuario = %s
+            """,
+            (session["id_usuario"],)
+        )
+        usuario = cursor.fetchone()
+
+        if usuario is None:
+            session.clear()
+            if es_api:
+                return jsonify({"error": "Sesión no válida."}), 401
+            flash("La sesión ya no es válida.", "danger")
+            return redirect(url_for("login"))
+
+        session["nombre_completo"] = usuario["nombre_completo"]
+        session["numero_identificacion"] = usuario["numero_identificacion"]
+        session["tipo_usuario"] = usuario["tipo_usuario"]
+        session["rol"] = usuario["rol"]
+        g.usuario = usuario
+
+    except Exception as e:
+        print("ERROR VALIDANDO SESIÓN:", e)
+        session.clear()
+        if es_api:
+            return jsonify({"error": "No fue posible validar la sesión."}), 503
+        flash("No fue posible validar la sesión.", "danger")
+        return redirect(url_for("login"))
+
+    finally:
+        cursor.close()
+        conexion.close()
+
+    return None
+
+
 @app.after_request
-def add_cors_headers(response):
+def add_security_headers(response):
     origin = request.headers.get("Origin")
 
     if origin in cors_origins:
         response.headers["Access-Control-Allow-Origin"] = origin
         response.headers["Access-Control-Allow-Credentials"] = "true"
         response.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
-        response.headers["Access-Control-Allow-Headers"] = "Content-Type"
+        response.headers["Access-Control-Allow-Headers"] = (
+            "Content-Type, X-CSRFToken"
+        )
         response.headers["Vary"] = "Origin"
 
+    response.headers.setdefault("X-Content-Type-Options", "nosniff")
+    response.headers.setdefault("X-Frame-Options", "DENY")
+    response.headers.setdefault("Referrer-Policy", "same-origin")
+    response.headers.setdefault(
+        "Permissions-Policy",
+        "camera=(self), microphone=(), geolocation=()"
+    )
+    response.headers.setdefault(
+        "Content-Security-Policy",
+        "default-src 'self'; "
+        "base-uri 'self'; "
+        "frame-ancestors 'none'; "
+        "form-action 'self'; "
+        "img-src 'self' data: blob:; "
+        "media-src 'self' blob:; "
+        "connect-src 'self'; "
+        "style-src 'self' 'unsafe-inline'; "
+        "script-src 'self' 'unsafe-inline'"
+    )
+
+    if request.path.startswith("/api/"):
+        response.headers.setdefault("Cache-Control", "no-store")
+
     return response
+
+
+@app.errorhandler(CSRFError)
+def manejar_csrf_error(error):
+    if request.path.startswith("/api/"):
+        return jsonify({"error": "Token CSRF inválido o expirado."}), 400
+
+    flash("La solicitud expiró. Intenta de nuevo.", "danger")
+    if "id_usuario" in session:
+        return redirect(url_for("admin_dashboard" if session.get("tipo_usuario") == "ADMINISTRADOR" else "dashboard"))
+    return redirect(url_for("login"))
+
+
+@app.errorhandler(413)
+def manejar_archivo_grande(error):
+    if request.path.startswith("/api/"):
+        return jsonify({"error": "La imagen supera el límite de 10 MB."}), 413
+
+    flash("El archivo enviado es demasiado grande.", "danger")
+    return redirect(url_for("login"))
 
 # ==========================================
 # INICIO
@@ -93,10 +351,22 @@ def index():
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
-        numero_identificacion = request.form.get("numero_identificacion", "").strip()
+        if not login_limiter.permitido(request.remote_addr or "desconocido"):
+            flash(
+                "Demasiados intentos. Espera unos minutos antes de volver a intentar.",
+                "danger"
+            )
+            return render_template("auth/auth.html", modo="login"), 429
 
-        if not numero_identificacion:
-            flash("Debes ingresar tu número de identificación.", "danger")
+        numero_identificacion = request.form.get("numero_identificacion", "").strip()
+        clave = request.form.get("clave", "")
+
+        if not numero_identificacion or not clave:
+            flash("Debes ingresar tu identificación y contraseña.", "danger")
+            return redirect(url_for("login"))
+
+        if len(clave) > 128:
+            flash("La identificación o la contraseña no son correctas.", "danger")
             return redirect(url_for("login"))
 
         conexion = obtener_conexion()
@@ -118,7 +388,8 @@ def login():
                     rol,
                     programa_formacion,
                     numero_ficha,
-                    tipo_usuario
+                    tipo_usuario,
+                    clave_hash
                 FROM usuarios
                 WHERE numero_identificacion = %s
             """
@@ -130,10 +401,16 @@ def login():
 
             usuario = cursor.fetchone()
 
-            if usuario is None:
-                flash("No existe un usuario con esa identificación.", "danger")
+            if (
+                usuario is None
+                or not usuario.get("clave_hash")
+                or not check_password_hash(usuario["clave_hash"], clave)
+            ):
+                flash("La identificación o la contraseña no son correctas.", "danger")
                 return redirect(url_for("login"))
 
+            session.clear()
+            session.permanent = True
             session["id_usuario"] = usuario["id_usuario"]
             session["nombre_completo"] = usuario["nombre_completo"]
             session["numero_identificacion"] = usuario["numero_identificacion"]
@@ -147,14 +424,14 @@ def login():
 
         except Exception as e:
             print("ERROR LOGIN:", e)
-            flash(f"Ocurrió un error al iniciar sesión: {e}", "danger")
+            flash("No fue posible iniciar sesión. Intenta de nuevo.", "danger")
             return redirect(url_for("login"))
 
         finally:
             cursor.close()
             conexion.close()
 
-    return render_template("auth/login.html")
+    return render_template("auth/auth.html", modo="login")
 
 # ==========================================
 # REGISTER
@@ -162,13 +439,19 @@ def login():
 @app.route("/register", methods=["GET", "POST"])
 def register():
     if request.method == "POST":
+        if not register_limiter.permitido(request.remote_addr or "desconocido"):
+            flash("Demasiados intentos. Espera un momento.", "danger")
+            return render_template("auth/auth.html", modo="register"), 429
+
         nombre_completo = request.form.get("nombre_completo", "").strip()
         numero_identificacion = request.form.get("numero_identificacion", "").strip()
-        correo = request.form.get("correo", "").strip()
-        telefono = request.form.get("telefono", "").strip()
+        correo = request.form.get("correo", "").strip().lower()
+        telefono = request.form.get("telefono", "").strip() or None
         rol = request.form.get("rol", "").strip()
         programa_formacion = request.form.get("programa_formacion", "").strip()
         numero_ficha = request.form.get("numero_ficha", "").strip()
+        clave = request.form.get("clave", "")
+        confirmar_clave = request.form.get("confirmar_clave", "")
 
         if not all([
             nombre_completo,
@@ -176,9 +459,19 @@ def register():
             correo,
             rol,
             programa_formacion,
-            numero_ficha
+            numero_ficha,
+            clave,
+            confirmar_clave
         ]):
             flash("Completa todos los campos obligatorios.", "danger")
+            return redirect(url_for("register"))
+
+        if len(clave) < 8 or len(clave) > 128:
+            flash("La contraseña debe tener entre 8 y 128 caracteres.", "danger")
+            return redirect(url_for("register"))
+
+        if clave != confirmar_clave:
+            flash("Las contraseñas no coinciden.", "danger")
             return redirect(url_for("register"))
 
         roles_validos = [
@@ -209,9 +502,10 @@ def register():
                     telefono,
                     rol,
                     programa_formacion,
-                    numero_ficha
+                    numero_ficha,
+                    clave_hash
                 )
-                VALUES (%s, %s, %s, %s, %s, %s, %s)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
             """
 
             valores = (
@@ -221,7 +515,8 @@ def register():
                 telefono,
                 rol,
                 programa_formacion,
-                numero_ficha
+                numero_ficha,
+                generate_password_hash(clave)
             )
 
             cursor.execute(
@@ -250,7 +545,7 @@ def register():
                 )
             else:
                 flash(
-                    f"No fue posible crear la cuenta: {e}",
+                    "No fue posible crear la cuenta. Intenta de nuevo.",
                     "danger"
                 )
 
@@ -260,7 +555,7 @@ def register():
             cursor.close()
             conexion.close()
 
-    return render_template("auth/register.html")
+    return render_template("auth/auth.html", modo="register")
 
 # ==========================================
 # DASHBOARD USUARIO
@@ -358,7 +653,7 @@ def dashboard():
         print("ERROR DASHBOARD:", e)
 
         flash(
-            f"Error al cargar el dashboard: {e}",
+            "No fue posible cargar el dashboard.",
             "danger"
         )
 
@@ -444,17 +739,26 @@ def api_escanear():
             "error": "Sesión no válida."
         }), 401
 
+    if not scan_limiter.permitido(f"usuario:{session['id_usuario']}"):
+        return jsonify({
+            "error": "Demasiados escaneos. Espera un momento."
+        }), 429
+
     if "imagen" not in request.files:
         return jsonify({
             "error": "No se recibió ninguna imagen."
         }), 400
 
     if model is None:
+        print("MODELO NO DISPONIBLE:", model_error)
         return jsonify({
-            "error":
-                "El modelo de IA no está disponible. "
-                "Error al cargar: " +
-                (model_error or "desconocido")
+            "error": "El modelo de IA no está disponible."
+        }), 503
+
+    if cv2 is None or np is None:
+        print("VISIÓN NO DISPONIBLE:", vision_error)
+        return jsonify({
+            "error": "El procesamiento de imágenes no está disponible."
         }), 503
 
     archivo = request.files["imagen"]
@@ -464,6 +768,11 @@ def api_escanear():
             "error": "La imagen está vacía."
         }), 400
 
+    if archivo.mimetype not in {"image/jpeg", "image/png", "image/webp"}:
+        return jsonify({
+            "error": "El formato de imagen no es válido."
+        }), 415
+
     try:
 
         # =====================================================
@@ -471,6 +780,11 @@ def api_escanear():
         # =====================================================
 
         datos = archivo.read()
+
+        if not datos:
+            return jsonify({
+                "error": "La imagen está vacía."
+            }), 400
 
         print("TAMAÑO IMAGEN RECIBIDA:", len(datos), "bytes")
 
@@ -488,6 +802,11 @@ def api_escanear():
             print("ERROR: cv2.imdecode devolvió None")
             return jsonify({
                 "error": "No fue posible procesar la imagen."
+            }), 400
+
+        if frame.shape[0] > 8000 or frame.shape[1] > 8000:
+            return jsonify({
+                "error": "Las dimensiones de la imagen no son válidas."
             }), 400
 
         print(
@@ -528,16 +847,13 @@ def api_escanear():
         except Exception as yolo_err:
             print("ERROR YOLO INFERENCE:", yolo_err)
             return jsonify({
-                "error":
-                    "Error del modelo de IA: " +
-                    str(yolo_err)
+                "error": "No fue posible ejecutar el modelo de IA."
             }), 500
 
         resultado = resultados[0]
 
         clases_detectadas = []
-
-        confianza_maxima = 0.0
+        confianzas_por_clase = {}
 
         for box in resultado.boxes:
 
@@ -558,9 +874,13 @@ def api_escanear():
                 )
             })
 
-            if confianza > confianza_maxima:
-                confianza_maxima = confianza
+            confianzas_por_clase[nombre_clase] = max(
+                confianza,
+                confianzas_por_clase.get(nombre_clase, 0.0)
+            )
 
+        confianza_botella = confianzas_por_clase.get("botella", 0.0)
+        confianza_maxima = max(confianzas_por_clase.values(), default=0.0)
 
         print("OBJETOS DETECTADOS:")
         print(clases_detectadas)
@@ -570,21 +890,16 @@ def api_escanear():
         # DETERMINAR OBJETOS
         # =====================================================
 
-        clases = [
-            item["clase"]
-            for item in clases_detectadas
-        ]
-
-        botella_detectada = (
-            "botella" in clases
-        )
+        botella_detectada = confianza_botella >= CONFIANZA_MINIMA
 
         tapa_detectada = (
-            "tapa" in clases
+            confianzas_por_clase.get("tapa", 0.0)
+            >= CONFIANZA_MINIMA
         )
 
         etiqueta_detectada = (
-            "etiqueta" in clases
+            confianzas_por_clase.get("etiqueta", 0.0)
+            >= CONFIANZA_MINIMA
         )
 
 
@@ -592,26 +907,19 @@ def api_escanear():
         # CALCULAR PUNTOS
         # =====================================================
 
-        puntos_base = 0
-        puntos_tapa = 0
-        puntos_etiqueta = 0
-        puntos_totales = 0
-
-        if botella_detectada:
-
-            puntos_base = 50
-
-            if tapa_detectada:
-                puntos_tapa = 10
-
-            if etiqueta_detectada:
-                puntos_etiqueta = 5
-
-            puntos_totales = (
-                puntos_base
-                + puntos_tapa
-                + puntos_etiqueta
-            )
+        (
+            puntos_base,
+            puntos_tapa,
+            puntos_etiqueta,
+            puntos_totales
+        ) = calcular_puntos(
+            {
+                "botella": botella_detectada,
+                "tapa": tapa_detectada,
+                "etiqueta": etiqueta_detectada
+            },
+            confianza_botella
+        )
 
 
         # =====================================================
@@ -636,10 +944,105 @@ def api_escanear():
 
 
         # =====================================================
+        # GUARDAR ANÁLISIS EN MYSQL
+        # =====================================================
+
+        conexion = obtener_conexion()
+
+        if conexion is None:
+            return jsonify({
+                "error": "No fue posible guardar el análisis."
+            }), 503
+
+        cursor = conexion.cursor()
+
+        try:
+            cursor.execute(
+                """
+                SELECT id_botella
+                FROM botellas
+                WHERE nombre = %s
+                LIMIT 1
+                """,
+                ("Botella PET",)
+            )
+            fila_botella = cursor.fetchone()
+            id_botella = fila_botella[0] if fila_botella else None
+
+            cursor.execute(
+                """
+                INSERT INTO analisis_ia (
+                    id_usuario,
+                    id_botella,
+                    imagen,
+                    botella_detectada,
+                    tapa_detectada,
+                    etiqueta_detectada,
+                    confianza,
+                    puntos_base,
+                    puntos_tapa,
+                    puntos_etiqueta,
+                    puntos_totales,
+                    estado_analisis,
+                    modelo_ia,
+                    version_modelo
+                )
+                VALUES (
+                    %s, %s, %s, %s, %s, %s, %s,
+                    %s, %s, %s, %s,
+                    %s, %s, %s
+                )
+                """,
+                (
+                    session["id_usuario"],
+                    id_botella,
+                    None,
+                    1 if botella_detectada else 0,
+                    1 if tapa_detectada else 0,
+                    1 if etiqueta_detectada else 0,
+                    round(
+                        (confianza_botella if botella_detectada else confianza_maxima) * 100,
+                        2
+                    ),
+                    puntos_base,
+                    puntos_tapa,
+                    puntos_etiqueta,
+                    puntos_totales,
+                    "IDENTIFICADO" if botella_detectada else "NO_IDENTIFICADO",
+                    "YOLO",
+                    "train-5"
+                )
+            )
+            id_analisis = cursor.lastrowid
+            conexion.commit()
+
+        except Exception as e:
+            conexion.rollback()
+            print("ERROR GUARDANDO ANÁLISIS:", e)
+            return jsonify({
+                "error": "No fue posible guardar el análisis."
+            }), 500
+
+        finally:
+            cursor.close()
+            conexion.close()
+
+
+        # =====================================================
         # SI NO HAY BOTELLA
         # =====================================================
 
         if not botella_detectada:
+
+            if confianza_botella > 0:
+                titulo = "Confianza insuficiente"
+                mensaje = (
+                    "La botella no alcanzó la confianza mínima del "
+                    f"{round(CONFIANZA_MINIMA * 100)}%."
+                )
+            else:
+                titulo = "Botella no reconocida"
+                mensaje = "No se detectó una botella válida."
 
             return jsonify({
 
@@ -647,16 +1050,21 @@ def api_escanear():
 
                 "botella_detectada": False,
 
-                "titulo":
-                    "Botella no reconocida",
+                "titulo": titulo,
 
-                "mensaje":
-                    "No se detectó una botella válida.",
+                "mensaje": mensaje,
 
                 "puntos": 0,
 
+                "confianza":
+                    confianza_maxima * 100,
+
                 "detecciones":
                     clases_detectadas,
+
+                "id_analisis": id_analisis,
+
+                "scan_id": id_analisis,
 
                 "imagen":
                     imagen_base64
@@ -666,9 +1074,6 @@ def api_escanear():
 
         # =====================================================
         # BOTELLA DETECTADA
-        #
-        # IMPORTANTE:
-        # AQUÍ TODAVÍA NO SE GUARDA NADA EN MYSQL.
         # =====================================================
 
         return jsonify({
@@ -696,7 +1101,7 @@ def api_escanear():
                 puntos_etiqueta,
 
             "confianza":
-                confianza_maxima * 100,
+                confianza_botella * 100,
 
             "tapa_detectada":
                 tapa_detectada,
@@ -706,6 +1111,10 @@ def api_escanear():
 
             "detecciones":
                 clases_detectadas,
+
+            "id_analisis": id_analisis,
+
+            "scan_id": id_analisis,
 
             "imagen":
                 imagen_base64
@@ -722,7 +1131,7 @@ def api_escanear():
         traceback.print_exc()
 
         return jsonify({
-            "error": str(e)
+            "error": "No fue posible procesar el escaneo."
         }), 500
 
 
@@ -746,171 +1155,112 @@ def registrar_reciclaje():
         }), 400
 
 
-    # =====================================================
-    # RECIBIR DATOS DEL ANÁLISIS
-    # =====================================================
-
-    botella_detectada = datos.get(
-        "botella_detectada",
-        False
-    )
-
-    tapa_detectada = datos.get(
-        "tapa_detectada",
-        False
-    )
-
-    etiqueta_detectada = datos.get(
-        "etiqueta_detectada",
-        False
-    )
-
-    confianza = datos.get(
-        "confianza",
-        0
-    )
-
-    puntos_base = datos.get(
-        "puntos_base",
-        0
-    )
-
-    puntos_tapa = datos.get(
-        "puntos_tapa",
-        0
-    )
-
-    puntos_etiqueta = datos.get(
-        "puntos_etiqueta",
-        0
-    )
-
-    puntos_totales = datos.get(
-        "puntos",
-        0
-    )
-
-
-    # =====================================================
-    # SEGURIDAD
-    # =====================================================
-
-    if not botella_detectada:
-
+    if not scan_limiter.permitido(
+        f"registro:{session['id_usuario']}"
+    ):
         return jsonify({
-            "error":
-                "No se puede registrar un reciclaje "
-                "sin una botella detectada."
-        }), 400
+            "error": "Demasiadas solicitudes. Espera un momento."
+        }), 429
 
+    try:
+        scan_id = int(datos.get("scan_id", 0))
+    except (TypeError, ValueError):
+        scan_id = 0
+
+    if scan_id <= 0:
+        return jsonify({
+            "error": "El escaneo no es válido."
+        }), 400
 
     conexion = obtener_conexion()
 
     if conexion is None:
-
         return jsonify({
-            "error":
-                "No fue posible conectar con "
-                "la base de datos."
-        }), 500
+            "error": "No fue posible conectar con la base de datos."
+        }), 503
 
-
-    cursor = conexion.cursor()
+    cursor = conexion.cursor(dictionary=True)
 
 
     try:
 
-        # =================================================
-        # BUSCAR BOTELLA PET
-        # =================================================
+        conexion.start_transaction()
 
         cursor.execute(
             """
-            SELECT id_botella
-            FROM botellas
-            WHERE nombre = %s
-            LIMIT 1
-            """,
-            ("Botella PET",)
-        )
-
-        botella = cursor.fetchone()
-
-        id_botella = None
-
-        if botella:
-            id_botella = botella[0]
-
-
-        # =================================================
-        # INSERTAR ANÁLISIS IA
-        # =================================================
-
-        consulta_analisis = """
-            INSERT INTO analisis_ia (
+            SELECT
+                id_analisis,
                 id_usuario,
-                id_botella,
-                imagen,
                 botella_detectada,
                 tapa_detectada,
                 etiqueta_detectada,
                 confianza,
-                puntos_base,
-                puntos_tapa,
-                puntos_etiqueta,
-                puntos_totales,
-                estado_analisis,
-                modelo_ia,
-                version_modelo
-            )
-            VALUES (
-                %s, %s, %s, %s, %s, %s, %s,
-                %s, %s, %s, %s,
-                %s, %s, %s
-            )
-        """
-
-
-        valores_analisis = (
-
-            session["id_usuario"],
-
-            id_botella,
-
-            None,
-
-            1 if botella_detectada else 0,
-
-            1 if tapa_detectada else 0,
-
-            1 if etiqueta_detectada else 0,
-
-            confianza,
-
-            puntos_base,
-
-            puntos_tapa,
-
-            puntos_etiqueta,
-
-            puntos_totales,
-
-            "IDENTIFICADO",
-
-            "YOLO",
-
-            "train-5"
-
+                estado_analisis
+            FROM analisis_ia
+            WHERE id_analisis = %s
+              AND id_usuario = %s
+            FOR UPDATE
+            """,
+            (scan_id, session["id_usuario"])
         )
 
+        analisis = cursor.fetchone()
+
+        if analisis is None:
+            conexion.rollback()
+            return jsonify({
+                "error": "El escaneo no existe o no pertenece a tu cuenta."
+            }), 404
+
+        if analisis["estado_analisis"] != "IDENTIFICADO":
+            conexion.rollback()
+            return jsonify({
+                "error": "El escaneo no contiene una botella válida."
+            }), 409
 
         cursor.execute(
-            consulta_analisis,
-            valores_analisis
+            """
+            SELECT id_movimiento
+            FROM movimientos_puntos
+            WHERE id_analisis = %s
+              AND tipo_movimiento = 'RECICLAJE'
+            LIMIT 1
+            """,
+            (scan_id,)
         )
 
+        if cursor.fetchone() is not None:
+            conexion.rollback()
+            return jsonify({
+                "error": "Este escaneo ya fue registrado."
+            }), 409
 
-        id_analisis = cursor.lastrowid
+        botella_detectada = bool(analisis["botella_detectada"])
+        tapa_detectada = bool(analisis["tapa_detectada"])
+        etiqueta_detectada = bool(analisis["etiqueta_detectada"])
+        confianza = float(analisis["confianza"] or 0) / 100
+
+        (
+            puntos_base,
+            puntos_tapa,
+            puntos_etiqueta,
+            puntos_totales
+        ) = calcular_puntos(
+            {
+                "botella": botella_detectada,
+                "tapa": tapa_detectada,
+                "etiqueta": etiqueta_detectada
+            },
+            confianza
+        )
+
+        if not botella_detectada or puntos_totales <= 0:
+            conexion.rollback()
+            return jsonify({
+                "error": "El escaneo no supera la confianza mínima."
+            }), 409
+
+        id_analisis = analisis["id_analisis"]
 
 
         # =================================================
@@ -922,7 +1272,7 @@ def registrar_reciclaje():
             SELECT COALESCE(
                 SUM(puntos),
                 0
-            )
+            ) AS saldo
             FROM movimientos_puntos
             WHERE id_usuario = %s
             """,
@@ -932,13 +1282,10 @@ def registrar_reciclaje():
         )
 
 
-        resultado_saldo = (
-            cursor.fetchone()
-        )
-
+        resultado_saldo = cursor.fetchone()
 
         saldo_anterior = int(
-            resultado_saldo[0] or 0
+            (resultado_saldo or {}).get("saldo", 0) or 0
         )
 
 
@@ -1088,7 +1435,7 @@ def registrar_reciclaje():
         )
 
         return jsonify({
-            "error": str(e)
+            "error": "No fue posible registrar el reciclaje."
         }), 500
 
 
@@ -1140,9 +1487,26 @@ def catalogo():
             )
             return redirect(url_for("dashboard"))
 
+        cursor.execute(
+            """
+            SELECT
+                id_producto,
+                nombre,
+                descripcion,
+                imagen,
+                costo_puntos,
+                stock
+            FROM productos
+            ORDER BY fecha_registro DESC
+            """
+        )
+
+        productos = cursor.fetchall()
+
         return render_template(
             "usuario/catalogo.html",
-            usuario=usuario
+            usuario=usuario,
+            productos=productos
         )
 
     except Exception as e:
@@ -1150,7 +1514,7 @@ def catalogo():
         print("ERROR CATÁLOGO:", e)
 
         flash(
-            f"No fue posible cargar el catálogo: {e}",
+            "No fue posible cargar el catálogo.",
             "danger"
         )
 
@@ -1217,7 +1581,7 @@ def admin_dashboard():
         )
 
         flash(
-            f"Error al cargar el dashboard: {e}",
+            "No fue posible cargar el dashboard administrativo.",
             "danger"
         )
 
@@ -1290,7 +1654,7 @@ def admin_usuarios():
 
     except Exception as e:
         print("ERROR GESTION USUARIOS:", e)
-        flash(f"Error al cargar los usuarios: {e}", "danger")
+        flash("No fue posible cargar los usuarios.", "danger")
         return redirect(url_for("admin_dashboard"))
 
     finally:
@@ -1414,6 +1778,16 @@ def admin_editar_usuario(id_usuario):
             "USUARIO"
         ).strip()
 
+        nueva_clave = request.form.get(
+            "nueva_clave",
+            ""
+        )
+
+        confirmar_clave = request.form.get(
+            "confirmar_clave",
+            ""
+        )
+
         # ==================================
         # VALIDACIONES
         # ==================================
@@ -1479,6 +1853,28 @@ def admin_editar_usuario(id_usuario):
                 )
             )
 
+        if nueva_clave or confirmar_clave:
+            if len(nueva_clave) < 8 or len(nueva_clave) > 128:
+                flash(
+                    "La nueva contraseña debe tener entre 8 y 128 caracteres.",
+                    "danger"
+                )
+                return redirect(
+                    url_for(
+                        "admin_editar_usuario",
+                        id_usuario=id_usuario
+                    )
+                )
+
+            if nueva_clave != confirmar_clave:
+                flash("Las contraseñas no coinciden.", "danger")
+                return redirect(
+                    url_for(
+                        "admin_editar_usuario",
+                        id_usuario=id_usuario
+                    )
+                )
+
         # ==================================
         # EVITAR QUE EL ADMIN SE ELIMINE
         # SU PROPIO ACCESO
@@ -1505,35 +1901,43 @@ def admin_editar_usuario(id_usuario):
         # ACTUALIZAR
         # ==================================
 
-        consulta = """
-            UPDATE usuarios
-            SET
-                numero_identificacion = %s,
-                nombre_completo = %s,
-                correo = %s,
-                telefono = %s,
-                rol = %s,
-                programa_formacion = %s,
-                numero_ficha = %s,
-                tipo_usuario = %s
-            WHERE id_usuario = %s
-        """
+        campos = [
+            "numero_identificacion = %s",
+            "nombre_completo = %s",
+            "correo = %s",
+            "telefono = %s",
+            "rol = %s",
+            "programa_formacion = %s",
+            "numero_ficha = %s",
+            "tipo_usuario = %s"
+        ]
 
-        valores = (
+        valores = [
             numero_identificacion,
             nombre_completo,
             correo,
-            telefono,
+            telefono or None,
             rol,
             programa_formacion,
             numero_ficha,
-            tipo_usuario,
-            id_usuario
+            tipo_usuario
+        ]
+
+        if nueva_clave:
+            campos.append("clave_hash = %s")
+            valores.append(generate_password_hash(nueva_clave))
+
+        valores.append(id_usuario)
+
+        consulta = (
+            "UPDATE usuarios SET "
+            + ", ".join(campos)
+            + " WHERE id_usuario = %s"
         )
 
         cursor.execute(
             consulta,
-            valores
+            tuple(valores)
         )
 
         # ==================================
@@ -1545,6 +1949,9 @@ def admin_editar_usuario(id_usuario):
             f"{nombre_completo} "
             f"(ID: {id_usuario})."
         )
+
+        if nueva_clave:
+            descripcion_auditoria += " Contraseña actualizada."
 
         cursor.execute(
             """
@@ -1608,7 +2015,7 @@ def admin_editar_usuario(id_usuario):
         else:
 
             flash(
-                f"No fue posible actualizar el usuario: {e}",
+                "No fue posible actualizar el usuario.",
                 "danger"
             )
 
@@ -1677,6 +2084,7 @@ def admin_eliminar_usuario(id_usuario):
 
         if cursor.rowcount == 0:
 
+            conexion.rollback()
             flash(
                 "El usuario no existe.",
                 "danger"
@@ -1685,6 +2093,24 @@ def admin_eliminar_usuario(id_usuario):
             return redirect(
                 url_for("admin_usuarios")
             )
+
+        cursor.execute("""
+            INSERT INTO auditoria (
+                id_usuario,
+                accion,
+                tabla_afectada,
+                id_registro,
+                descripcion,
+                ip
+            ) VALUES (%s, %s, %s, %s, %s, %s)
+        """, (
+            session["id_usuario"],
+            "ELIMINAR",
+            "usuarios",
+            id_usuario,
+            f"Se eliminó el usuario ID {id_usuario}.",
+            request.remote_addr
+        ))
 
         conexion.commit()
 
@@ -1750,9 +2176,23 @@ def agregar_puntos(id_usuario):
         flash("No fue posible conectar con la base de datos.", "danger")
         return redirect(url_for("admin_usuarios"))
 
-    cursor = conexion.cursor()
+    cursor = conexion.cursor(dictionary=True)
 
     try:
+        conexion.start_transaction()
+
+        cursor.execute("""
+            SELECT id_usuario
+            FROM usuarios
+            WHERE id_usuario = %s
+            FOR UPDATE
+        """, (id_usuario,))
+
+        if cursor.fetchone() is None:
+            conexion.rollback()
+            flash("El usuario no existe.", "danger")
+            return redirect(url_for("admin_usuarios"))
+
         consulta = """
             INSERT INTO movimientos_puntos (
                 id_usuario,
@@ -1773,6 +2213,26 @@ def agregar_puntos(id_usuario):
         )
 
         cursor.execute(consulta, valores)
+        id_movimiento = cursor.lastrowid
+
+        cursor.execute("""
+            INSERT INTO auditoria (
+                id_usuario,
+                accion,
+                tabla_afectada,
+                id_registro,
+                descripcion,
+                ip
+            ) VALUES (%s, %s, %s, %s, %s, %s)
+        """, (
+            session["id_usuario"],
+            "BONIFICACION",
+            "movimientos_puntos",
+            id_movimiento,
+            f"Se agregaron {puntos} SIGIPUNTOS al usuario ID {id_usuario}.",
+            request.remote_addr
+        ))
+
         conexion.commit()
 
         flash(
@@ -1783,7 +2243,7 @@ def agregar_puntos(id_usuario):
     except Exception as e:
         conexion.rollback()
         print("ERROR AGREGANDO PUNTOS:", e)
-        flash(f"No fue posible agregar los puntos: {e}", "danger")
+        flash("No fue posible agregar los puntos.", "danger")
 
     finally:
         cursor.close()
@@ -1823,6 +2283,20 @@ def quitar_puntos(id_usuario):
     cursor = conexion.cursor(dictionary=True)
 
     try:
+        conexion.start_transaction()
+
+        cursor.execute("""
+            SELECT id_usuario
+            FROM usuarios
+            WHERE id_usuario = %s
+            FOR UPDATE
+        """, (id_usuario,))
+
+        if cursor.fetchone() is None:
+            conexion.rollback()
+            flash("El usuario no existe.", "danger")
+            return redirect(url_for("admin_usuarios"))
+
         consulta_saldo = """
             SELECT COALESCE(SUM(puntos), 0) AS saldo
             FROM movimientos_puntos
@@ -1832,9 +2306,10 @@ def quitar_puntos(id_usuario):
         cursor.execute(consulta_saldo, (id_usuario,))
         resultado = cursor.fetchone()
 
-        saldo_actual = resultado["saldo"]
+        saldo_actual = int(resultado["saldo"] or 0)
 
         if puntos > saldo_actual:
+            conexion.rollback()
             flash(
                 f"El usuario solamente tiene {saldo_actual} SIGIPUNTOS.",
                 "danger"
@@ -1861,6 +2336,26 @@ def quitar_puntos(id_usuario):
         )
 
         cursor.execute(consulta, valores)
+        id_movimiento = cursor.lastrowid
+
+        cursor.execute("""
+            INSERT INTO auditoria (
+                id_usuario,
+                accion,
+                tabla_afectada,
+                id_registro,
+                descripcion,
+                ip
+            ) VALUES (%s, %s, %s, %s, %s, %s)
+        """, (
+            session["id_usuario"],
+            "PENALIZACION",
+            "movimientos_puntos",
+            id_movimiento,
+            f"Se quitaron {puntos} SIGIPUNTOS al usuario ID {id_usuario}.",
+            request.remote_addr
+        ))
+
         conexion.commit()
 
         flash(
@@ -1871,7 +2366,7 @@ def quitar_puntos(id_usuario):
     except Exception as e:
         conexion.rollback()
         print("ERROR QUITANDO PUNTOS:", e)
-        flash(f"No fue posible quitar los puntos: {e}", "danger")
+        flash("No fue posible quitar los puntos.", "danger")
 
     finally:
         cursor.close()
@@ -2035,7 +2530,7 @@ def admin_catalogo():
         print("ERROR CATALOGO ADMIN:", e)
 
         flash(
-            f"Error al cargar el catálogo: {e}",
+            "No fue posible cargar el catálogo.",
             "danger"
         )
 
@@ -2438,7 +2933,7 @@ def admin_movimientos():
 
         print("ERROR MOVIMIENTOS:", e)
         flash(
-            f"Error al cargar movimientos: {e}",
+            "No fue posible cargar los movimientos.",
             "danger"
         )
         return redirect(url_for("admin_dashboard"))
@@ -2496,8 +2991,8 @@ def api_buscar_usuario(identificacion):
 
         return jsonify(usuario)
 
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+    except Exception:
+        return jsonify({"error": "No fue posible buscar el usuario."}), 500
 
     finally:
         cursor.close()
@@ -2513,15 +3008,18 @@ def admin_canjar_puntos():
     if session.get("tipo_usuario") != "ADMINISTRADOR":
         return redirect(url_for("dashboard"))
 
-    datos = request.get_json()
+    datos = request.get_json(silent=True)
 
     if not datos:
         return jsonify({"error": "No se recibieron datos."}), 400
 
-    id_usuario = datos.get("id_usuario")
-    id_producto = datos.get("id_producto")
+    try:
+        id_usuario = int(datos.get("id_usuario", 0))
+        id_producto = int(datos.get("id_producto", 0))
+    except (TypeError, ValueError):
+        return jsonify({"error": "Los datos del canje no son válidos."}), 400
 
-    if not id_usuario or not id_producto:
+    if id_usuario <= 0 or id_producto <= 0:
         return jsonify({
             "error": "Faltan datos: id_usuario e id_producto son obligatorios."
         }), 400
@@ -2535,30 +3033,52 @@ def admin_canjar_puntos():
 
     try:
 
+        conexion.start_transaction()
+
         # ==========================================
-        # 1. OBTENER PRODUCTO
+        # 1. BLOQUEAR USUARIO Y VALIDAR EXISTENCIA
+        # ==========================================
+
+        cursor.execute("""
+            SELECT id_usuario
+            FROM usuarios
+            WHERE id_usuario = %s
+            FOR UPDATE
+        """, (id_usuario,))
+
+        if cursor.fetchone() is None:
+            conexion.rollback()
+            return jsonify({
+                "error": "El usuario no existe."
+            }), 404
+
+        # ==========================================
+        # 2. BLOQUEAR PRODUCTO Y VALIDAR STOCK
         # ==========================================
 
         cursor.execute("""
             SELECT id_producto, nombre, costo_puntos, stock
             FROM productos
             WHERE id_producto = %s
+            FOR UPDATE
         """, (id_producto,))
 
         producto = cursor.fetchone()
 
         if producto is None:
+            conexion.rollback()
             return jsonify({
                 "error": "El producto no existe."
             }), 404
 
         if producto["stock"] <= 0:
+            conexion.rollback()
             return jsonify({
                 "error": "El producto no tiene stock disponible."
             }), 400
 
         # ==========================================
-        # 2. OBTENER SALDO DEL USUARIO
+        # 3. OBTENER SALDO DEL USUARIO
         # ==========================================
 
         cursor.execute("""
@@ -2573,6 +3093,7 @@ def admin_canjar_puntos():
         costo = int(producto["costo_puntos"])
 
         if saldo_actual < costo:
+            conexion.rollback()
             return jsonify({
                 "error": (
                     f"El usuario tiene {saldo_actual} SIGIPUNTOS "
@@ -2582,18 +3103,18 @@ def admin_canjar_puntos():
             }), 400
 
         # ==========================================
-        # 3. INSERTAR CANJE
+        # 4. INSERTAR CANJE
         # ==========================================
 
         cursor.execute("""
-            INSERT INTO canjes (id_usuario, total_puntos)
-            VALUES (%s, %s)
-        """, (id_usuario, costo))
+            INSERT INTO canjes (id_usuario, id_producto, total_puntos)
+            VALUES (%s, %s, %s)
+        """, (id_usuario, id_producto, costo))
 
         id_canje = cursor.lastrowid
 
         # ==========================================
-        # 4. INSERTAR MOVIMIENTO DE PUNTOS
+        # 5. INSERTAR MOVIMIENTO DE PUNTOS
         # ==========================================
 
         motivo = (
@@ -2620,17 +3141,24 @@ def admin_canjar_puntos():
         ))
 
         # ==========================================
-        # 5. ACTUALIZAR STOCK DEL PRODUCTO
+        # 6. ACTUALIZAR STOCK DEL PRODUCTO
         # ==========================================
 
         cursor.execute("""
             UPDATE productos
             SET stock = stock - 1
             WHERE id_producto = %s
+              AND stock > 0
         """, (id_producto,))
 
+        if cursor.rowcount != 1:
+            conexion.rollback()
+            return jsonify({
+                "error": "El producto no tiene stock disponible."
+            }), 409
+
         # ==========================================
-        # 6. REGISTRAR AUDITORÍA
+        # 7. REGISTRAR AUDITORÍA
         # ==========================================
 
         cursor.execute("""
@@ -2656,7 +3184,7 @@ def admin_canjar_puntos():
         ))
 
         # ==========================================
-        # 7. CONFIRMAR
+        # 8. CONFIRMAR
         # ==========================================
 
         conexion.commit()
@@ -2680,7 +3208,9 @@ def admin_canjar_puntos():
 
         conexion.rollback()
         print("ERROR CANJANDO:", e)
-        return jsonify({"error": str(e)}), 500
+        return jsonify({
+            "error": "No fue posible procesar el canje."
+        }), 500
 
     finally:
         cursor.close()
@@ -2692,6 +3222,6 @@ def admin_canjar_puntos():
 # ==========================================
 if __name__ == "__main__":
     app.run(
-        debug=True
+        debug=os.getenv("FLASK_DEBUG") == "1"
     )
 

@@ -1,0 +1,50 @@
+{% set __user_items = {
+    "dashboard": ("dashboard", "⌂", "Inicio"),
+    "informacion": ("informacion", "ⓘ", "Información"),
+    "escanear": ("escanear", "⌁", "Escanear"),
+    "catalogo": ("catalogo", "▣", "Catálogo")
+} %}
+<div class="mobile-overlay" id="mobile-overlay"></div>
+<button class="mobile-hamburger" id="mobile-hamburger" aria-label="Abrir menú" aria-controls="mobile-sidebar" aria-expanded="false">&#9776;</button>
+
+<aside class="sidebar" id="mobile-sidebar">
+    <div class="sidebar-brand">
+        <div class="sidebar-logo">
+            <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo SIGIREC">
+        </div>
+        <h1>SIGIREC</h1>
+        <p>Sistema de Gestión Inteligente de Recolección de Reciclaje</p>
+    </div>
+
+    <nav class="sidebar-menu" aria-label="Menú de usuario">
+        <span class="menu-title">MENÚ</span>
+
+        {% for key, item in __user_items.items() %}
+        {% if key == active_item %}
+        <a href="{{ url_for(item[0]) }}" class="menu-item active" aria-current="page">
+        {% else %}
+        <a href="{{ url_for(item[0]) }}" class="menu-item">
+        {% endif %}
+            <span class="menu-icon" aria-hidden="true">{{ item[1] }}</span>
+            <span>{{ item[2] }}</span>
+        </a>
+        {% endfor %}
+    </nav>
+
+    <div class="sidebar-bottom">
+        <div class="sidebar-user">
+            <div class="user-avatar">
+                {{ session["nombre_completo"][0] }}
+            </div>
+            <div class="user-info">
+                <strong>{{ session["nombre_completo"] }}</strong>
+                <span>{{ session["numero_identificacion"] }}</span>
+            </div>
+        </div>
+
+        <a href="{{ url_for('logout') }}" class="logout-button">
+            <span aria-hidden="true">↪</span>
+            <span>Cerrar sesión</span>
+        </a>
+    </div>
+</aside>

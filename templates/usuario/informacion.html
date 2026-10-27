@@ -10,67 +10,8 @@
 {% block content %}
 
 <div class="dashboard">
-    <div class="mobile-overlay" id="mobile-overlay"></div>
-    <button class="mobile-hamburger" id="mobile-hamburger" aria-label="Abrir menú">&#9776;</button>
-    <aside class="sidebar" id="mobile-sidebar">
-
-        <div class="sidebar-brand">
-            <div class="sidebar-logo">
-                <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo SIGIREC">
-            </div>
-
-            <h1>SIGIREC</h1>
-
-            <p>
-                Sistema de Gestión Inteligente de Recolección de Reciclaje
-            </p>
-        </div>
-
-        <nav class="sidebar-menu">
-
-            <span class="menu-title">MENÚ</span>
-
-            <a href="{{ url_for('dashboard') }}" class="menu-item">
-                <span class="menu-icon">⌂</span>
-                <span>Inicio</span>
-            </a>
-
-            <a href="{{ url_for('informacion') }}" class="menu-item active">
-                <span class="menu-icon">ⓘ</span>
-                <span>Información</span>
-            </a>
-
-            <a href="{{ url_for('escanear') }}" class="scan-button">
-                <span>⌁</span>
-                Escanear
-            </a>
-
-
-        </nav>
-
-        <div class="sidebar-bottom">
-
-            <div class="sidebar-user">
-
-                <div class="user-avatar">
-                    {{ session["nombre_completo"][0] }}
-                </div>
-
-                <div class="user-info">
-                    <strong>{{ session["nombre_completo"] }}</strong>
-                    <span>{{ session["numero_identificacion"] }}</span>
-                </div>
-
-            </div>
-
-            <a href="{{ url_for('logout') }}" class="logout-button">
-                <span>↪</span>
-                Cerrar sesión
-            </a>
-
-        </div>
-
-    </aside>
+    {% set active_item = "informacion" %}
+{% include "partials/user_shell.html" %}
 
 
     <main class="dashboard-main">
@@ -189,28 +130,94 @@
                     ¿Quién desarrolló SIGIREC?
                 </h3>
 
-                <div class="developer-info">
+                <div class="developer-list">
 
-                    <div class="developer-avatar">
-                        AF
+                    <div class="developer-info">
+
+                        <div class="developer-avatar">
+                            MAL
+                        </div>
+
+                        <div>
+                            <strong>
+                                Miguel Angel Leon Oliveros
+                            </strong>
+
+                            <span>
+                                Frontend
+                            </span>
+
+                            <span>
+                                Ficha 3139687 · SENA
+                            </span>
+                        </div>
+
                     </div>
 
-                    <div>
-                        <strong>
-                            Andres Forero
-                        </strong>
+                    <div class="developer-info">
 
-                        <span>
-                            Tecnólogo en Análisis y Desarrollo de Software
-                        </span>
+                        <div class="developer-avatar">
+                            CAH
+                        </div>
 
-                        <span>
-                            Ficha 3139687
-                        </span>
+                        <div>
+                            <strong>
+                                Camilo Andres Hernandez Romero
+                            </strong>
 
-                        <span>
-                            SENA
-                        </span>
+                            <span>
+                                DevOps
+                            </span>
+
+                            <span>
+                                Ficha 3139687 · SENA
+                            </span>
+                        </div>
+
+                    </div>
+
+                    <div class="developer-info">
+
+                        <div class="developer-avatar">
+                            SSM
+                        </div>
+
+                        <div>
+                            <strong>
+                                Santiago Sanchez Mogollon
+                            </strong>
+
+                            <span>
+                                Frontend
+                            </span>
+
+                            <span>
+                                Ficha 3139687 · SENA
+                            </span>
+                        </div>
+
+                    </div>
+
+                    <div class="developer-info">
+
+                        <div class="developer-avatar">
+                            KDF
+                        </div>
+
+                        <div>
+                            <strong>
+                                Karen Dayana Forero Rueda
+                            </strong>
+
+                            <span>
+                                Backend
+                            </span>
+
+                            <span>
+                                Ficha 3139687 · SENA
+                            </span>
+                        </div>
+
                     </div>
 
                 </div>
@@ -508,7 +515,7 @@
             <div>
 
                 <span class="card-label">
-                    TIENDA SIGIREC
+                    CANJES SIGIREC
                 </span>
 
                 <h3>
@@ -518,8 +525,8 @@
                 <p>
                     Los SIGIPUNTOS acumulados mediante el reciclaje
                     podrán utilizarse para realizar canjes dentro del
-                    catálogo de productos disponible en la tienda
-                    de SIGIREC.
+                    catálogo de productos disponible en
+                    el sistema de canjes de SIGIREC.
                 </p>
 
                 <p>
@@ -548,15 +555,5 @@
     </main>
 
 </div>
-<script>
-(function(){
-    var h=document.getElementById("mobile-hamburger");
-    var s=document.getElementById("mobile-sidebar");
-    var o=document.getElementById("mobile-overlay");
-    if(h&&s&&o){
-        h.addEventListener("click",function(){s.classList.toggle("mobile-open");o.classList.toggle("active");});
-        o.addEventListener("click",function(){s.classList.remove("mobile-open");o.classList.remove("active");});
-    }
-})();
-</script>
+<script src="{{ url_for('static', filename='js/shell.js') }}"></script>
 {% endblock %}

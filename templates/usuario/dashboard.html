@@ -6,45 +6,8 @@
 {% endblock %}
 {% block content %}
 <div class="dashboard">
-    <div class="mobile-overlay" id="mobile-overlay"></div>
-    <button class="mobile-hamburger" id="mobile-hamburger" aria-label="Abrir menú">&#9776;</button>
-    <aside class="sidebar" id="mobile-sidebar">
-        <div class="sidebar-brand">
-            <div class="sidebar-logo">
-                <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo SIGIREC">
-            </div>
-            <h1>SIGIREC</h1>
-            <p>Sistema de Gestión Inteligente de Recolección de Reciclaje</p>
-        </div>
-        <nav class="sidebar-menu">
-            <span class="menu-title">MENÚ</span>
-            <a href="{{ url_for('dashboard') }}" class="menu-item active">
-                <span class="menu-icon">⌂</span>
-                <span>Inicio</span>
-            </a>
-            <a href="{{ url_for('informacion') }}" class="menu-item">
-                <span class="menu-icon">ⓘ</span>
-                <span>Información</span>
-            </a>
-            <a href="{{ url_for('escanear') }}" class="menu-item">
-                <span class="menu-icon">⌁</span>
-                <span>Escanear</span>
-            </a>
-        </nav>
-        <div class="sidebar-bottom">
-            <div class="sidebar-user">
-                <div class="user-avatar">{{ usuario.nombre_completo[0] }}</div>
-                <div class="user-info">
-                    <strong>{{ usuario.nombre_completo }}</strong>
-                    <span>{{ usuario.numero_identificacion }}</span>
-                </div>
-            </div>
-            <a href="{{ url_for('logout') }}" class="logout-button">
-                <span>↪</span>
-                Cerrar sesión
-            </a>
-        </div>
-    </aside>
+    {% set active_item = "dashboard" %}
+{% include "partials/user_shell.html" %}
 
     <main class="dashboard-main">
         <header class="dashboard-header">
@@ -115,7 +78,6 @@
                         <span class="card-label">ACTIVIDAD</span>
                         <h3>Últimos reciclajes</h3>
                     </div>
-                    <a href="#">Ver todos</a>
                 </div>
 
                 {% if usuario.botellas_recicladas > 0 %}
@@ -137,7 +99,7 @@
                 <span class="card-label">SOBRE SIGIREC</span>
                 <h3>Recicla inteligentemente.</h3>
                 <p>SIGIREC es un sistema inteligente diseñado para incentivar el reciclaje mediante tecnología de inteligencia artificial.</p>
-                <p>Deposita tu botella, escanéala y recibe SIGIPUNTOS que podrás utilizar posteriormente en nuestra tienda.</p>
+                <p>Deposita tu botella, escanéala y recibe SIGIPUNTOS que podrás canjear posteriormente en el catálogo.</p>
 
                 <div class="info-highlight">
                     <span>BOTELLA PET</span>
@@ -173,15 +135,5 @@
         </section>
     </main>
 </div>
-<script>
-(function(){
-    var h=document.getElementById("mobile-hamburger");
-    var s=document.getElementById("mobile-sidebar");
-    var o=document.getElementById("mobile-overlay");
-    if(h&&s&&o){
-        h.addEventListener("click",function(){s.classList.toggle("mobile-open");o.classList.toggle("active");});
-        o.addEventListener("click",function(){s.classList.remove("mobile-open");o.classList.remove("active");});
-    }
-})();
-</script>
+<script src="{{ url_for('static', filename='js/shell.js') }}"></script>
 {% endblock %}

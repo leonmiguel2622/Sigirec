@@ -41,7 +41,7 @@
 
 .mov-form-group label {
     display: block;
-    color: #5f6c63;
+    color: #9aa7a0;
     font-size: 11px;
     margin-bottom: 6px;
     text-transform: uppercase;
@@ -141,8 +141,8 @@
 }
 
 .mov-info-label {
-    font-size: 10px;
-    color: #4f5d53;
+    font-size: 11px;
+    color: #9aa7a0;
     text-transform: uppercase;
     letter-spacing: 1px;
     font-weight: 700;
@@ -209,7 +209,7 @@
 }
 
 .mov-placeholder {
-    color: #4f5d53;
+    color: #9aa7a0;
     font-size: 13px;
     text-align: center;
     padding: 30px 20px;
@@ -251,10 +251,10 @@
 
 .mov-table th {
     background: #060d08;
-    color: #5f6c63;
+    color: #9aa7a0;
     padding: 12px 16px;
     text-align: left;
-    font-size: 9px;
+    font-size: 11px;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 1px;
@@ -293,7 +293,7 @@
 
 .mov-empty {
     text-align: center;
-    color: #4f5d53;
+    color: #9aa7a0;
     padding: 30px;
 }
 

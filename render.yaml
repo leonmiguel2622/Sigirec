@@ -12,3 +12,23 @@ services:
         value: "1"
       - key: MKL_NUM_THREADS
         value: "1"
+      - key: SIGIREC_ENV
+        value: production
+      - key: FLASK_DEBUG
+        value: "0"
+      - key: TRUST_PROXY
+        value: "1"
+      - key: SECRET_KEY
+        sync: false
+      - key: DB_HOST
+        sync: false
+      - key: DB_PORT
+        sync: false
+      - key: DB_USER
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: DB_NAME
+        sync: false
+      - key: CORS_ORIGINS
+        sync: false

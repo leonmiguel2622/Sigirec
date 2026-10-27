@@ -33,49 +33,6 @@
     border-right: 1px solid #1b271e;
 }
 
-.admin-brand {
-    padding: 28px 24px;
-    text-align: center;
-    border-bottom: 1px solid #182219;
-}
-
-.admin-logo {
-    width: 74px;
-    height: 74px;
-    margin: 0 auto 14px;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.admin-logo img {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-}
-
-.admin-brand h1 {
-    margin: 0;
-
-    color: #91ff66;
-
-    font-size: 24px;
-    font-weight: 700;
-    letter-spacing: 2px;
-}
-
-.admin-brand p {
-    margin: 7px auto 0;
-
-    max-width: 190px;
-
-    color: #647068;
-
-    font-size: 11px;
-    line-height: 1.5;
-}
-
 
 /* =========================================================
    MENÚ
@@ -84,59 +41,6 @@
 .admin-nav {
     flex: 1;
     padding: 24px 14px;
-}
-
-.admin-menu-title {
-    display: block;
-
-    margin: 0 12px 12px;
-
-    color: #4f5d53;
-
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: 1.5px;
-}
-
-.admin-nav-item {
-    display: flex;
-    align-items: center;
-
-    gap: 13px;
-
-    padding: 12px 14px;
-    margin-bottom: 5px;
-
-    border-radius: 10px;
-
-    color: #77837b;
-
-    text-decoration: none;
-
-    font-size: 13px;
-
-    transition: 0.25s ease;
-}
-
-.admin-nav-item:hover {
-    color: #dce5de;
-    background: #111a13;
-}
-
-.admin-nav-item.active {
-    color: #91ff66;
-
-    background: #142016;
-
-    border: 1px solid #243725;
-}
-
-.admin-nav-icon {
-    width: 21px;
-
-    text-align: center;
-
-    font-size: 16px;
 }
 
 
@@ -148,88 +52,6 @@
     padding: 18px 14px;
 
     border-top: 1px solid #182219;
-}
-
-.admin-user-box {
-    display: flex;
-    align-items: center;
-
-    gap: 11px;
-
-    padding: 10px;
-    margin-bottom: 10px;
-}
-
-.admin-avatar,
-.admin-header-avatar {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    border-radius: 50%;
-
-    background: #18251a;
-
-    color: #91ff66;
-
-    font-weight: 700;
-}
-
-.admin-avatar {
-    width: 39px;
-    height: 39px;
-    min-width: 39px;
-
-    font-size: 14px;
-}
-
-.admin-user-info {
-    display: flex;
-    flex-direction: column;
-
-    gap: 4px;
-
-    overflow: hidden;
-}
-
-.admin-user-info strong {
-    color: #dce4de;
-
-    font-size: 12px;
-
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.admin-user-info span {
-    color: #5f6c63;
-
-    font-size: 10px;
-}
-
-.admin-logout {
-    display: flex;
-    align-items: center;
-
-    gap: 10px;
-
-    padding: 11px 12px;
-
-    border-radius: 9px;
-
-    color: #69756d;
-
-    text-decoration: none;
-
-    font-size: 12px;
-
-    transition: 0.25s ease;
-}
-
-.admin-logout:hover {
-    color: #ff7c7c;
-    background: #1a1111;
 }
 
 
@@ -261,33 +83,6 @@
     margin-bottom: 28px;
 }
 
-.page-label {
-    color: #66736a;
-
-    font-size: 10px;
-    font-weight: 700;
-
-    letter-spacing: 1.5px;
-}
-
-.admin-page-header h2 {
-    margin: 7px 0 6px;
-
-    color: #edf2ee;
-
-    font-size: 28px;
-    font-weight: 600;
-}
-
-.admin-page-header p {
-    margin: 0;
-
-    color: #68756d;
-
-    font-size: 12px;
-    line-height: 1.6;
-}
-
 
 /* =========================================================
    USUARIO HEADER
@@ -305,33 +100,6 @@
     border-radius: 11px;
 
     background: #0d130f;
-}
-
-.admin-header-avatar {
-    width: 38px;
-    height: 38px;
-
-    font-size: 13px;
-}
-
-.admin-header-user div:last-child {
-    display: flex;
-    flex-direction: column;
-
-    gap: 3px;
-}
-
-.admin-header-user strong {
-    color: #dce5de;
-
-    font-size: 11px;
-}
-
-.admin-header-user span {
-    color: #91ff66;
-
-    font-size: 8px;
-    letter-spacing: 1px;
 }
 
 
@@ -357,9 +125,9 @@
 }
 
 .catalog-label {
-    color: #66736a;
+    color: #9aa7a0;
 
-    font-size: 9px;
+    font-size: 11px;
     font-weight: 700;
 
     letter-spacing: 1.4px;
@@ -377,7 +145,7 @@
 .catalog-header p {
     margin: 0;
 
-    color: #657169;
+    color: #9aa7a0;
 
     font-size: 11px;
     line-height: 1.5;
@@ -405,9 +173,9 @@
 }
 
 .catalog-count span {
-    color: #657169;
+    color: #9aa7a0;
 
-    font-size: 10px;
+    font-size: 11px;
 }
 
 
@@ -550,7 +318,7 @@
 
     color: #91ff66;
 
-    font-size: 8px;
+    font-size: 11px;
     font-weight: 700;
 
     letter-spacing: 0.5px;
@@ -570,9 +338,9 @@
 
     margin-bottom: 6px;
 
-    color: #4f5d53;
+    color: #9aa7a0;
 
-    font-size: 8px;
+    font-size: 11px;
     font-weight: 700;
 
     letter-spacing: 1px;
@@ -594,9 +362,9 @@
 
     min-height: 42px;
 
-    color: #68756d;
+    color: #9aa7a0;
 
-    font-size: 10px;
+    font-size: 11px;
 
     line-height: 1.55;
 }
@@ -639,9 +407,9 @@
 }
 
 .product-price span {
-    color: #536158;
+    color: #9aa7a0;
 
-    font-size: 8px;
+    font-size: 11px;
     font-weight: 700;
 
     letter-spacing: 0.8px;
@@ -662,9 +430,9 @@
 }
 
 .product-stock-info span {
-    color: #4f5d53;
+    color: #9aa7a0;
 
-    font-size: 8px;
+    font-size: 11px;
     font-weight: 700;
 
     letter-spacing: 0.8px;
@@ -722,7 +490,7 @@
 .catalog-info span {
     color: #91ff66;
 
-    font-size: 8px;
+    font-size: 11px;
     font-weight: 700;
 
     letter-spacing: 1.2px;
@@ -742,9 +510,9 @@
 
     margin: 0;
 
-    color: #6c7970;
+    color: #9aa7a0;
 
-    font-size: 10px;
+    font-size: 11px;
 
     line-height: 1.6;
 }
@@ -798,7 +566,7 @@
 
     margin: 7px 0 0;
 
-    color: #59665e;
+    color: #9aa7a0;
 
     font-size: 11px;
 
@@ -816,47 +584,11 @@
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
-}
-
-
-@media (max-width: 900px) {
-
-    .admin-main {
-        padding: 25px;
-    }
-
-    .admin-page-header {
-        align-items: flex-start;
-        flex-direction: column;
-    }
-
-    .admin-header-user {
-        width: 100%;
-        box-sizing: border-box;
-    }
-
-}
-
-
-@media (max-width: 700px) {
-
-    .admin-layout {
-        flex-direction: column;
-    }
-
-    .admin-sidebar {
-        width: 100%;
-        min-width: 100%;
-        min-height: auto;
-    }
+}@media (max-width: 700px) {
 
     .admin-nav,
     .admin-sidebar-bottom {
         display: none;
-    }
-
-    .admin-main {
-        padding: 18px;
     }
 
     .catalog-grid {
@@ -872,10 +604,7 @@
         align-self: flex-start;
     }
 
-}
-
-
-@media (max-width: 450px) {
+}@media (max-width: 450px) {
 
     .product-image {
         height: 190px;

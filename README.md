@@ -7,7 +7,7 @@ Desarrollado por el equipo **SigiDev's** para la comunidad educativa SENA (apren
 ## Funcionalidades
 
 ### Usuario
-- **Registro e inicio de sesión** con número de identificación y roles (Aprendiz, Instructor, Área Administrativa, Externo)
+- **Registro e inicio de sesión** con número de identificación, contraseña y roles (Aprendiz, Instructor, Área Administrativa, Externo)
 - **Detección IA**: escanea botellas PET mediante la cámara usando un modelo YOLOv8 entrenado con dataset propio; identifica botella, tapa y etiqueta
 - **Sistema de SIGIPUNTOS**: asigna puntos automáticamente según lo detectado (50 base + 10 tapa + 5 etiqueta)
 - **Comprobantes de reciclaje**: genera automáticamente un comprobante numerado (SIGI-XXXXXX) por cada reciclaje registrado
@@ -41,11 +41,6 @@ Desarrollado por el equipo **SigiDev's** para la comunidad educativa SENA (apren
 - HTML / CSS / JavaScript (DOM)
 - Jinja2 (motor de plantillas)
 
-### Desktop / Distribución
-- Electron (aplicación de escritorio)
-- PyInstaller (empaquetado del backend Python)
-- electron-builder (instalador NSIS para Windows)
-
 ### Despliegue
 - Render (Web Service, configurado con `render.yaml` y `Procfile`)
 - Clever Cloud (base de datos MySQL)
@@ -57,31 +52,28 @@ SigiRec/
 ├── app.py              # Aplicación principal Flask (rutas, API, lógica)
 ├── conexion.py         # Conexión a MySQL (Clever Cloud)
 ├── train.py            # Entrenamiento del modelo YOLO
-├── camara.py           # Prueba de cámara en tiempo real
-├── main.js             # Aplicación de escritorio Electron
-├── app.spec            # Configuración de empaquetado PyInstaller
+├── camara.py           # Prueba local de cámara en tiempo real
 ├── requirements.txt    # Dependencias Python
 ├── runtime.txt         # Versión de Python para despliegue
 ├── Procfile            # Comando de inicio en Render
 ├── render.yaml         # Configuración del despliegue en Render
-├── package.json        # Configuración de Electron / electron-builder
+├── .env.example        # Variables de entorno requeridas
+├── migrations/         # Migraciones SQL
+├── scripts/            # Utilidades de administración
 ├── yolov8n.pt          # Pesos base de YOLOv8n
 ├── runs/detect/        # Pesos del modelo entrenado (train-5/best.pt)
 ├── static/             # Archivos estáticos (CSS, JS, imágenes)
-├── templates/          # Plantillas Jinja2
-│   ├── auth/           # Login y registro
-│   ├── usuario/        # Dashboard, escaneo, catálogo, comprobantes
-│   └── admin/          # Panel administrativo
-├── build/              # Artefactos de electron-builder
-└── dist/               # Aplicación empaquetada (Electron + PyInstaller)
+└── templates/          # Plantillas Jinja2
+    ├── auth/           # Login y registro
+    ├── usuario/        # Dashboard, escaneo, catálogo, comprobantes
+    └── admin/          # Panel administrativo
 ```
 
 ## Requisitos
 
-- Python 3.9+
+- Python 3.11+
 - MySQL 8.0+
 - pip
-- Node.js 18+ y npm (solo para construir la app de escritorio)
 
 ## Instalación
 
@@ -99,26 +91,37 @@ venv\Scripts\activate   # Windows
 pip install -r requirements.txt
 ```
 
-## Configuración de la base de datos
+## Configuración
 
-1. Crear la base de datos en MySQL (local):
+1. Crear la base de datos e importar el esquema:
 
 ```sql
 CREATE DATABASE sigirec;
 ```
 
-2. Importar el esquema SQL (`sigirec (3).sql`) si se dispone de él.
+2. Importar el esquema (`sigirec (3).sql`) y ejecutar la migración de seguridad:
 
-3. Actualizar la conexión en `conexion.py` (por defecto apunta a una instancia gestionada en Clever Cloud):
+```bash
+mysql -u root -p sigirec < "sigirec (3).sql"
+mysql -u root -p sigirec < migrations/001_phase2_security.sql
+```
 
-```python
-conexion = mysql.connector.connect(
-    host="localhost",
-    user="root",
-    password="",
-    database="sigirec",
-    port=3306
-)
+3. Copiar `.env.example` a `.env` y completar las variables:
+
+```env
+SIGIREC_SECRET_KEY=una-clave-larga-y-aleatoria
+DB_HOST=localhost
+DB_PORT=3306
+DB_USER=root
+DB_PASSWORD=
+DB_NAME=sigirec
+CORS_ORIGINS=http://127.0.0.1:5000
+```
+
+4. Asignar la contraseña inicial de un administrador existente:
+
+```bash
+python scripts/set_password.py 0000000000 --admin
 ```
 
 ## Ejecución en modo web
@@ -127,30 +130,9 @@ conexion = mysql.connector.connect(
 python app.py
 ```
 
-El servidor arranca en `http://localhost:5000`. El modelo de IA se carga desde `runs/detect/train-5/weights/best.pt`; si no está disponible, las funciones de escaneo quedan inhabilitadas con un mensaje de error.
+El servidor arranca en `http://127.0.0.1:5000`. El modelo de IA se carga desde `runs/detect/train-5/weights/best.pt`; si no está disponible, las funciones de escaneo quedan inhabilitadas con un mensaje de error.
 
-## Ejecución como aplicación de escritorio (Electron)
-
-La app combina un backend Flask (Python) con una ventana Electron (frontend).
-
-**Modo desarrollo:**
-
-```bash
-npm install
-npm start   # inicia Python (app.py) y abre la ventana de Electron
-```
-
-**Generar instalador de Windows (NSIS):**
-
-```bash
-# 1. Empaquetar el backend Python con PyInstaller
-pyinstaller app.spec
-
-# 2. Crear el instalador de Electron
-npm run dist
-```
-
-El instalador se genera en la carpeta `dist/`.
+La aplicación es exclusivamente web; no requiere instaladores de escritorio.
 
 ## Entrenamiento del modelo
 

@@ -1,6 +1,7 @@
 ﻿# Python
 __pycache__/
 *.py[cod]
+.pytest_cache/
 *$py.class
 *.so
 .Python
@@ -9,16 +10,10 @@ venv/
 .venv/
 ENV/
 .env
+.env.*
+!.env.example
+instance/
 *.egg-info/
-
-# Node / Electron
-node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-dist/
-out/
-build/
 
 # OS
 .DS_Store
@@ -34,6 +29,10 @@ Desktop.ini
 .idea/
 *.swp
 *.swo
+
+# Datos locales con posibles credenciales o información personal
+sigirec*.sql
+*.env
 
 # Sigirec - descomenta si quieres ignorar runs/modelos entrenados
 # runs/
