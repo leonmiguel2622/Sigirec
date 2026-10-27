@@ -123,19 +123,16 @@
                 </div>
 
 
-                <div class="admin-empty">
+                <div class="admin-empty" role="status" aria-labelledby="activity-empty-title">
 
-                    <div class="admin-empty-icon">
+                    <div class="admin-empty-icon" aria-hidden="true">
                         ◉
                     </div>
 
-                    <h4>
-                        No hay actividad registrada
-                    </h4>
+                    <h4 id="activity-empty-title">Aún no hay movimientos recientes</h4>
 
                     <p>
-                        Los nuevos registros y movimientos
-                        aparecerán aquí.
+                        Los registros administrativos y los cambios de SIGIPUNTOS aparecerán aquí.
                     </p>
 
                 </div>
@@ -162,83 +159,28 @@
                 </div>
 
 
-                <div class="system-status-list">
-
-                    <div class="system-status-item">
-
-                        <div class="system-status-name">
-
-                            <span class="status-dot"></span>
-
-                            <span>
-                                Plataforma web
-                            </span>
-
-                        </div>
-
-                        <strong>
-                            Activa
-                        </strong>
-
-                    </div>
-
-
-                    <div class="system-status-item">
-
-                        <div class="system-status-name">
-
-                            <span class="status-dot"></span>
-
-                            <span>
-                                Base de datos
-                            </span>
-
-                        </div>
-
-                        <strong>
-                            Conectada
-                        </strong>
-
-                    </div>
-
-
-                    <div class="system-status-item">
-
-                        <div class="system-status-name">
-
-                            <span class="status-dot"></span>
-
-                            <span>
-                                Sistema de usuarios
-                            </span>
-
-                        </div>
-
-                        <strong>
-                            Activo
-                        </strong>
-
-                    </div>
-
-
-                    <div class="system-status-item">
-
-                        <div class="system-status-name">
-
-                            <span class="status-dot"></span>
-
-                            <span>
-                                Inteligencia artificial
-                            </span>
-
-                        </div>
-
-                        <strong>
-                            Funcional Alpha 3
-                        </strong>
-
-                    </div>
-
+                <div class="system-status-table-wrap">
+                    <table class="system-status-table" aria-label="Estado de servicios SIGIREC">
+                        <thead>
+                            <tr>
+                                <th scope="col">Servicio</th>
+                                <th scope="col">Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for servicio in estados_sistema %}
+                            <tr>
+                                <th scope="row">{{ servicio.nombre }}</th>
+                                <td>
+                                    <span class="sh-badge {{ 'sh-badge--active' if servicio.disponible else 'sh-badge--alert' }}">
+                                        <span class="status-pulse {{ 'is-unavailable' if not servicio.disponible else '' }}" aria-hidden="true"></span>
+                                        {{ servicio.estado }}
+                                    </span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
                 </div>
 
             </div>

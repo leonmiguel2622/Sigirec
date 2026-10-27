@@ -1562,6 +1562,7 @@ def catalogo():
 # ==========================================
 # DASHBOARD ADMINISTRADOR
 # ==========================================
+@app.route("/admin/dashboard")
 @app.route("/admin")
 def admin_dashboard():
 
@@ -1602,9 +1603,21 @@ def admin_dashboard():
 
         estadisticas = cursor.fetchone()
 
+        estados_sistema = [
+            {"nombre": "Plataforma web", "estado": "Activa", "disponible": True},
+            {"nombre": "Base de datos", "estado": "Conectada", "disponible": True},
+            {"nombre": "Sistema de usuarios", "estado": "Activo", "disponible": True},
+            {
+                "nombre": "Inteligencia artificial",
+                "estado": "Disponible" if model is not None else "No disponible",
+                "disponible": model is not None
+            }
+        ]
+
         return render_template(
             "admin/dashboard.html",
-            estadisticas=estadisticas
+            estadisticas=estadisticas,
+            estados_sistema=estados_sistema
         )
 
     except Exception as e:
