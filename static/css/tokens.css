@@ -45,6 +45,8 @@
     --sh-line-soft: rgba(34, 197, 94, 0.12);
     --sh-line-card: #232e26;
     --sh-line-neutral: rgba(255, 255, 255, 0.06);
+    --sh-table-head: #1a231c;
+    --sh-table-row-hover: #1e2820;
 
     /* --- Radios --- */
     --sh-radius-xs: 6px;

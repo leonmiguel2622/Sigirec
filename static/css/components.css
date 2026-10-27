@@ -1,0 +1,233 @@
+/* SIGIREC atomic components. Add these classes to opt into the shared UI. */
+
+.sh-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--sh-space-1);
+    min-height: 24px;
+    padding: 3px 9px;
+    border: 1px solid var(--sh-line-neutral);
+    border-radius: var(--sh-radius-pill);
+    background: var(--sh-bg-card-alt);
+    color: var(--sh-text-secondary);
+    font: var(--sh-weight-medium) var(--sh-type-label) / 1 var(--sh-font);
+    letter-spacing: var(--sh-tracking-normal);
+    white-space: nowrap;
+}
+
+.sh-badge--active {
+    border-color: rgba(34, 197, 94, 0.34);
+    background: rgba(34, 197, 94, 0.12);
+    color: #4ade80;
+}
+
+.sh-badge--admin {
+    border-color: rgba(147, 197, 253, 0.3);
+    background: rgba(59, 130, 246, 0.12);
+    color: #bfdbfe;
+}
+
+.sh-badge--alert {
+    border-color: rgba(251, 191, 36, 0.34);
+    background: rgba(251, 191, 36, 0.12);
+    color: #fbbf24;
+}
+
+.sh-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--sh-space-2);
+    min-height: 40px;
+    padding: 0 var(--sh-space-4);
+    border: 1px solid transparent;
+    border-radius: var(--sh-radius-standard);
+    background: transparent;
+    color: inherit;
+    font: var(--sh-weight-semibold) var(--sh-type-body) / 1 var(--sh-font);
+    letter-spacing: var(--sh-tracking-normal);
+    text-decoration: none;
+    cursor: pointer;
+    transition:
+        color var(--sh-speed) ease,
+        background-color var(--sh-speed) ease,
+        border-color var(--sh-speed) ease,
+        transform var(--sh-speed) ease;
+}
+
+.sh-button--primary {
+    background: var(--sh-accent);
+    color: var(--sh-selection-text);
+}
+
+.sh-button--primary:hover:not(:disabled) {
+    background: var(--sh-accent-soft);
+}
+
+.sh-button--secondary {
+    border-color: var(--sh-line-card);
+    background: var(--sh-bg-card-alt);
+    color: var(--sh-text-primary);
+}
+
+.sh-button--secondary:hover:not(:disabled) {
+    border-color: var(--sh-line-strong);
+    background: var(--sh-bg-hover);
+}
+
+.sh-button--outline-compact {
+    min-height: 30px;
+    padding: 0 9px;
+    border-color: var(--sh-line-strong);
+    background: transparent;
+    color: var(--sh-accent-soft);
+    font-size: var(--sh-type-label);
+}
+
+.sh-button--outline-compact:hover:not(:disabled) {
+    background: rgba(34, 197, 94, 0.12);
+    border-color: var(--sh-accent-soft);
+}
+
+.sh-button:disabled,
+.sh-button[aria-disabled="true"] {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+.sh-form-label {
+    display: block;
+    margin-bottom: var(--sh-space-2);
+    color: var(--sh-text-secondary);
+    font-size: var(--sh-type-label);
+    font-weight: var(--sh-weight-medium);
+    letter-spacing: var(--sh-tracking-label);
+}
+
+.sh-input,
+.sh-select,
+.sh-search {
+    display: block;
+    width: 100%;
+    min-height: 40px;
+    padding: 9px 12px;
+    border: 1px solid var(--sh-line-card);
+    border-radius: var(--sh-radius-standard);
+    background: var(--sh-bg-base);
+    color: var(--sh-text-primary);
+    font: var(--sh-weight-regular) var(--sh-type-body) / var(--sh-leading-body) var(--sh-font);
+    letter-spacing: var(--sh-tracking-normal);
+    transition:
+        border-color var(--sh-speed) ease,
+        background-color var(--sh-speed) ease,
+        box-shadow var(--sh-speed) ease;
+}
+
+.sh-input::placeholder,
+.sh-search::placeholder {
+    color: var(--sh-text-muted);
+    opacity: 1;
+}
+
+.sh-input:hover,
+.sh-select:hover,
+.sh-search:hover {
+    border-color: var(--sh-line-strong);
+}
+
+.sh-input:focus-visible,
+.sh-select:focus-visible,
+.sh-search:focus-visible {
+    border-color: var(--sh-focus-ring);
+}
+
+.sh-select {
+    cursor: pointer;
+}
+
+textarea.sh-input {
+    min-height: 96px;
+    resize: vertical;
+}
+
+.sh-card {
+    border: 1px solid var(--sh-line-card);
+    border-radius: var(--sh-radius-card);
+    background: var(--sh-bg-card);
+    color: var(--sh-text-primary);
+}
+
+.sh-card--selectable {
+    cursor: pointer;
+    transition:
+        background-color var(--sh-speed) ease,
+        border-color var(--sh-speed) ease,
+        transform var(--sh-speed) ease;
+}
+
+.sh-card--selectable:hover,
+.sh-card--selectable:focus-visible {
+    border-color: var(--sh-line-strong);
+    background: var(--sh-bg-hover);
+}
+
+.sh-card--selectable:active {
+    transform: translateY(1px);
+}
+
+.sh-card--selectable.is-active,
+.sh-card--selectable[aria-selected="true"],
+.sh-card--selectable[aria-pressed="true"] {
+    border-color: var(--sh-accent);
+    background: var(--sh-bg-active);
+}
+
+.sh-table-wrap {
+    width: 100%;
+    overflow-x: auto;
+    border: 1px solid var(--sh-line-card);
+    border-radius: var(--sh-radius-card);
+}
+
+.sh-table {
+    width: 100%;
+    border-collapse: collapse;
+    color: var(--sh-text-primary);
+    font-size: var(--sh-type-body);
+    text-align: left;
+}
+
+.sh-table th,
+.sh-table td {
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--sh-line-neutral);
+    vertical-align: middle;
+}
+
+.sh-table thead th {
+    background: var(--sh-table-head);
+    color: var(--sh-text-secondary);
+    font-size: var(--sh-type-label);
+    font-weight: var(--sh-weight-semibold);
+}
+
+.sh-table tbody tr {
+    background: var(--sh-bg-card);
+    transition: background-color var(--sh-speed) ease;
+}
+
+.sh-table tbody tr:hover {
+    background: var(--sh-table-row-hover);
+}
+
+.sh-table tbody tr:last-child td {
+    border-bottom: 0;
+}
+
+@media (max-width: 640px) {
+    .sh-table th,
+    .sh-table td {
+        padding: 12px 14px;
+    }
+}
