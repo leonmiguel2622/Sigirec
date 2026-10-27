@@ -2938,6 +2938,7 @@ def admin_movimientos():
                 id_producto,
                 nombre,
                 descripcion,
+                imagen,
                 costo_puntos,
                 stock
             FROM productos
