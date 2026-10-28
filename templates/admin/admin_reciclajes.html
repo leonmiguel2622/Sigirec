@@ -93,7 +93,7 @@
                                     </td>
                                     <td>
                                         {% if reciclaje.numero_comprobante %}
-                                            <span class="ia-badge">{{ reciclaje.numero_comprobante }}</span>
+                                            <span class="ia-badge {{ 'ok' if reciclaje.confianza >= 80 else 'pending' }}">{{ reciclaje.numero_comprobante or 'Sin comprobante' }}</span>
                                         {% else %}
                                             <span class="ia-badge pending">Sin comprobante</span>
                                         {% endif %}
