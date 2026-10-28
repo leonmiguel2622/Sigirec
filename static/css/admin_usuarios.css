@@ -24,7 +24,7 @@
    MAIN CONTENT AREA
    ========================================== */
 .admin-main.admin-sidebar {
-    position: fixed;
+    position: fixed !important;
     left: 0;
     top: 0;
     bottom: 0;
