@@ -202,7 +202,16 @@
     background: #1a1111;
 }
 
-.admin-main {
+.admin-main {.admin-sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    bottom: 0;
+
+    z-index: 1000;
+    
+    width: 250px;  /* Admin sidebar width */
+}
     flex: 1;
     min-width: 0;
     padding: 35px 40px;
@@ -567,7 +576,16 @@
         min-width: 220px;
     }
 
-    .admin-main {
+    .admin-main {.admin-sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    bottom: 0;
+
+    z-index: 1000;
+    
+    width: 250px;  /* Admin sidebar width */
+}
         padding: 25px;
     }
 
@@ -593,7 +611,16 @@
         transform: translateX(0);
     }
 
-    .admin-main {
+    .admin-main {.admin-sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    bottom: 0;
+
+    z-index: 1000;
+    
+    width: 250px;  /* Admin sidebar width */
+}
         padding: 60px 18px 20px;
     }
 

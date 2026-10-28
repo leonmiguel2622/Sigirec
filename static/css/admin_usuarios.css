@@ -23,7 +23,16 @@
 /* ==========================================
    MAIN CONTENT AREA
    ========================================== */
-.admin-main {
+.admin-main.admin-sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    bottom: 0;
+
+    z-index: 1000;
+    
+    width: 250px;
+} {
   flex: 1;
   min-width: 0;
   padding: 35px 40px;
