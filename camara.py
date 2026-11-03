@@ -1,19 +1,44 @@
+import glob
 import os
 
 import cv2
 from ultralytics import YOLO
 
 base_dir = os.path.dirname(os.path.abspath(__file__))
-model_path = os.path.join(
-    base_dir,
-    "runs",
-    "detect",
-    "train-5",
-    "weights",
-    "best.pt"
-)
+
+
+def resolver_modelo():
+    ruta_env = (os.getenv("SIGIREC_MODEL_PATH") or "").strip()
+    if ruta_env and os.path.isfile(ruta_env):
+        return ruta_env
+
+    candidatos = [os.path.join(base_dir, "models", "best.pt")]
+
+    runs = glob.glob(
+        os.path.join(base_dir, "runs", "detect", "*", "weights", "best.pt")
+    )
+    runs.sort(key=os.path.getmtime, reverse=True)
+    candidatos.extend(runs)
+
+    candidatos.append(
+        os.path.join(base_dir, "runs", "detect", "train-5", "weights", "best.pt")
+    )
+
+    for ruta in candidatos:
+        if os.path.isfile(ruta):
+            return ruta
+
+    raise SystemExit(
+        "No se encontro un modelo. Coloca best.pt en models/best.pt "
+        "o define SIGIREC_MODEL_PATH."
+    )
+
+
+model_path = resolver_modelo()
 model = YOLO(model_path)
-cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
+print("Modelo:", model_path)
+print("Clases:", model.names)
+cap = cv2.VideoCapture(int(os.getenv("SIGIREC_CAMERA_INDEX", "0")), cv2.CAP_DSHOW)
 cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
 

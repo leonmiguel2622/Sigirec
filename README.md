@@ -59,9 +59,11 @@ SigiRec/
 ├── render.yaml         # Configuración del despliegue en Render
 ├── .env.example        # Variables de entorno requeridas
 ├── migrations/         # Migraciones SQL
-├── scripts/            # Utilidades de administración
+├── scripts/            # Utilidades de administración y verificación
+├── dataset/            # Export de Roboflow en formato YOLOv8 (local)
+├── models/             # Modelo estable usado por la app (best.pt)
 ├── yolov8n.pt          # Pesos base de YOLOv8n
-├── runs/detect/        # Pesos del modelo entrenado (train-5/best.pt)
+├── runs/detect/        # Resultados de entrenamientos anteriores
 ├── static/             # Archivos estáticos (CSS, JS, imágenes)
 └── templates/          # Plantillas Jinja2
     ├── auth/           # Login y registro
@@ -130,17 +132,31 @@ python scripts/set_password.py 0000000000 --admin
 python app.py
 ```
 
-El servidor arranca en `http://127.0.0.1:5000`. El modelo de IA se carga desde `runs/detect/train-5/weights/best.pt`; si no está disponible, las funciones de escaneo quedan inhabilitadas con un mensaje de error.
+El servidor arranca en `http://127.0.0.1:5000`. El modelo de IA se resuelve en este orden: `SIGIREC_MODEL_PATH`, `models/best.pt`, el `runs/detect/<run>/weights/best.pt` más reciente y, por compatibilidad, `runs/detect/train-5/weights/best.pt`. Si no hay ningún modelo disponible, las funciones de escaneo quedan inhabilitadas con un mensaje de error.
 
 La aplicación es exclusivamente web; no requiere instaladores de escritorio.
 
-## Entrenamiento del modelo
+## Dataset de Roboflow y entrenamiento del modelo
+
+1. En Roboflow abre el proyecto, entra a **Download Dataset** y elige el formato **YOLOv8** (también aparece como *YOLOv8 PyTorch TXT*). Descarga el `.zip`.
+2. Descomprime el contenido dentro de `dataset/`, de modo que quede `dataset/data.yaml`.
+3. Verifica el export antes de entrenar:
+
+```bash
+python scripts/verificar_dataset.py
+```
+
+4. Entrena con los pesos base de YOLOv8n:
 
 ```bash
 python train.py
 ```
 
-Entrena YOLOv8n con el dataset propio. Los pesos se guardan en `runs/detect/`. El modelo usado por la aplicación está en `runs/detect/train-5/weights/best.pt`.
+`train.py` lee `dataset/data.yaml`, guarda el entrenamiento en `runs/detect/` y publica una copia del mejor modelo en `models/best.pt`, que es la ruta estable que usa la aplicación. Las rutas y parámetros se pueden cambiar con las variables `SIGIREC_DATA_YAML`, `SIGIREC_EPOCHS`, `SIGIREC_IMGSZ`, `SIGIREC_BATCH`, `SIGIREC_DEVICE` y `SIGIREC_RUN_NAME`.
+
+Si ya entrenaste en Roboflow y solo quieres usar esos pesos, descarga el `best.pt` del proyecto y colócalo en `models/best.pt` (o define `SIGIREC_MODEL_PATH`).
+
+Las clases del dataset deben representar `botella`, `tapa` y `etiqueta`. El código también reconoce alias en inglés como `bottle`, `cap` y `label`.
 
 ## Despliegue en Render
 

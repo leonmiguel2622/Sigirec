@@ -84,6 +84,87 @@ PUNTOS_TAPA = 10
 PUNTOS_ETIQUETA = 5
 CONFIANZA_MINIMA = float(os.getenv("SIGIREC_MIN_CONFIDENCE", "0.25"))
 
+CLASES_ESPERADAS = ("botella", "tapa", "etiqueta")
+
+ALIAS_CLASES = {
+    "botella": "botella",
+    "botellas": "botella",
+    "bottle": "botella",
+    "bottles": "botella",
+    "botella pet": "botella",
+    "pet bottle": "botella",
+    "plastic bottle": "botella",
+    "tapa": "tapa",
+    "tapas": "tapa",
+    "cap": "tapa",
+    "caps": "tapa",
+    "bottle cap": "tapa",
+    "etiqueta": "etiqueta",
+    "etiquetas": "etiqueta",
+    "label": "etiqueta",
+    "labels": "etiqueta",
+}
+
+
+def normalizar_clase(nombre):
+    limpio = str(nombre).strip().lower().replace("_", " ").replace("-", " ")
+    limpio = " ".join(limpio.split())
+
+    if limpio in ALIAS_CLASES:
+        return ALIAS_CLASES[limpio]
+
+    for alias, canonico in ALIAS_CLASES.items():
+        if limpio.startswith(alias + " "):
+            return canonico
+
+    return limpio
+
+
+def resolver_modelo():
+    candidatos = []
+
+    ruta_env = (os.getenv("SIGIREC_MODEL_PATH") or "").strip()
+    if ruta_env:
+        candidatos.append(os.path.abspath(os.path.expanduser(ruta_env)))
+
+    candidatos.append(os.path.join(BASE_DIR, "models", "best.pt"))
+
+    runs_dir = os.path.join(BASE_DIR, "runs", "detect")
+    if os.path.isdir(runs_dir):
+        runs = []
+        for entrada in os.listdir(runs_dir):
+            candidato = os.path.join(runs_dir, entrada, "weights", "best.pt")
+            if os.path.isfile(candidato):
+                runs.append(candidato)
+        runs.sort(key=os.path.getmtime, reverse=True)
+        candidatos.extend(runs)
+
+    candidatos.append(
+        os.path.join(BASE_DIR, "runs", "detect", "train-5", "weights", "best.pt")
+    )
+
+    for ruta in candidatos:
+        if os.path.isfile(ruta):
+            return ruta
+
+    return None
+
+
+def version_desde_modelo(ruta):
+    version_env = (os.getenv("SIGIREC_MODEL_VERSION") or "").strip()
+    if version_env:
+        return version_env
+
+    if not ruta:
+        return "desconocida"
+
+    ruta = os.path.abspath(ruta)
+    pesos = os.path.join("weights", "")
+    if pesos in ruta:
+        return os.path.basename(os.path.dirname(os.path.dirname(ruta)))
+
+    return os.path.splitext(os.path.basename(ruta))[0]
+
 
 class RateLimiter:
     def __init__(self, limite, ventana_segundos):
@@ -169,6 +250,7 @@ def calcular_puntos(detecciones, confianza):
 
 model = None
 model_error = None
+model_version = version_desde_modelo(None)
 
 if YOLO is None:
     model_error = "Ultralytics no está instalado: " + (yolo_import_error or "desconocido")
@@ -180,24 +262,35 @@ if YOLO is None:
     # #endregion
 else:
     try:
-        model_path = os.path.join(
-            BASE_DIR,
-            'runs', 'detect',
-            'train-5', 'weights',
-            'best.pt'
-        )
+        model_path = resolver_modelo()
 
-        if not os.path.exists(model_path):
+        if model_path is None:
             raise FileNotFoundError(
-                "Modelo no encontrado en: " + model_path
+                "Modelo no encontrado. Coloca best.pt en models/best.pt, "
+                "en runs/detect/<run>/weights/best.pt o define SIGIREC_MODEL_PATH."
             )
 
         model = YOLO(model_path)
+        model_version = version_desde_modelo(model_path)
 
         print("======================================")
         print("MODELO SIGIREC CARGADO")
         print("RUTA:", model.ckpt_path)
+        print("VERSION:", model_version)
         print("CLASES:", model.names)
+
+        nombres_modelo = (
+            model.names.values() if isinstance(model.names, dict) else model.names
+        )
+        clases_modelo = {normalizar_clase(nombre) for nombre in nombres_modelo}
+        faltantes = [clase for clase in CLASES_ESPERADAS if clase not in clases_modelo]
+
+        if faltantes:
+            print(
+                "ADVERTENCIA: el modelo no tiene las clases:",
+                ", ".join(faltantes)
+            )
+
         print("======================================")
         # #region agent log
         _agent_log("B", "app.py:model-ok", "YOLO model loaded", {"path": str(model.ckpt_path)})
@@ -894,9 +987,8 @@ def api_escanear():
 
             confianza = float(box.conf[0])
 
-            nombre_clase = (
+            nombre_clase = normalizar_clase(
                 resultado.names[clase_id]
-                .lower()
             )
 
             clases_detectadas.append({
@@ -1043,7 +1135,7 @@ def api_escanear():
                     puntos_totales,
                     "IDENTIFICADO" if botella_detectada else "NO_IDENTIFICADO",
                     "YOLO",
-                    "train-5"
+                    model_version
                 )
             )
             id_analisis = cursor.lastrowid

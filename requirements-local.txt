@@ -4,4 +4,5 @@ python-dotenv
 mysql-connector-python
 opencv-python-headless
 numpy
+PyYAML
 ultralytics
